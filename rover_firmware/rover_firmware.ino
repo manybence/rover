@@ -1,13 +1,9 @@
 #include "rover_lib.h"
 
 void setup() {
-	// stepper.setup(CLOSEDLOOP, 200);
-	// stepper.setMaxAcceleration(2000);
-	// stepper.setMaxVelocity(800);
-	// stepper.checkOrientation(30.0);
-  // stepper.setCurrent(10.0);//use software current setting
-  Serial.begin(9600);
 
+  //Configure pins
+  pinMode(N_SWITCH_PIN, INPUT_PULLUP);
   pinMode(L_SWITCH_PIN, INPUT_PULLUP);
   pinMode(R_SWITCH_PIN, INPUT_PULLUP);
   pinMode(EN_PIN, OUTPUT);
@@ -16,9 +12,22 @@ void setup() {
   pinMode(M1_PIN, OUTPUT);
   pinMode(M2_PIN, OUTPUT);
 
-  //Set full step mode
+  //Configure horizontal stepper
+	stepper.setup(CLOSEDLOOP, 200);
+	stepper.setMaxAcceleration(2000);
+	stepper.setMaxVelocity(800);
+  stepper.setControlThreshold(15);
+  stepper.setHoldCurrent(5);
+  stepper.setCurrent(15.0); //Maybe increase
+  stepper.clearStall();
+
+  //Configure needle stepper
   digitalWrite(M1_PIN, LOW);
   digitalWrite(M2_PIN, LOW);
+  analogWrite(STEP_PIN, 0);
+  digitalWrite(EN_PIN, HIGH);
+
+  Serial.begin(9600);
 }
 
 
@@ -27,6 +36,9 @@ void loop() {
   char cmd;
 
   //Read microswitches
+  if (!digitalRead(N_SWITCH_PIN)){
+    Serial.println("Needle switch activated");
+  } 
   if (!digitalRead(L_SWITCH_PIN)){
     Serial.println("Left switch activated");
   } 
@@ -35,29 +47,35 @@ void loop() {
   } 
   delay(200);
 
-  while(!Serial.available());
+  //while(!Serial.available());
   cmd = Serial.read();
 
+
   //Move needle down
-  if(cmd == 'x'){
+  if(cmd == 'r'){
+    needle_reset();
+  }
+
+  //Move needle down
+  if(cmd == 'd'){
     start_needle(true);
     delay(500);
     stop_needle();
   }
 
   //Move needle up
-  if(cmd == 'y'){
+  if(cmd == 'u' && digitalRead(N_SWITCH_PIN)){
     start_needle(false);
     delay(500);
     stop_needle();
   }
 
-  /*
-  if(cmd == '-'){
+  //TODO: Add uswitch limits!
+  if(cmd == '-' && digitalRead(L_SWITCH_PIN)){
     stepper.moveAngle(angle);
   }
   
-  else if(cmd == '+'){
+  else if(cmd == '+' && digitalRead(R_SWITCH_PIN)){
     stepper.moveAngle(-angle);
   }
 
@@ -69,9 +87,8 @@ void loop() {
   else if(cmd == 'z')  //zero command               
   {
     stepper.clearStall();
-    while (!digitalRead(LeftSwitchPin) or !digitalRead(RightSwitchPin)) {
+    while (digitalRead(L_SWITCH_PIN) && digitalRead(R_SWITCH_PIN)) {
       stepper.moveAngle(2.0*angle); //larger (0.5mm) step back
     }
   }
-  */
 }
