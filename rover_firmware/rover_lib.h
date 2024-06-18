@@ -10,6 +10,12 @@ const int MAXN = 85100;
 float zero = 0.0;
 float a = 0.0;
 
+//Needle seettings
+//PWM frequency is 1 kHz
+float depth = 0.0;
+const float DEPTH_TO_TIME = 1000 * 200 / (0.5 * 1000);   // time / depth = Steps per revolution / Step mode (half) * PWM frequency. Pitch of shaft is 1 mm/rev 
+const float MAX_DEPTH = 28;
+
 //Define IO pins
 int L_SWITCH_PIN = 11;  //Connect COM pin of switch to GND
 int R_SWITCH_PIN = 10; //Connect COM pin of switch to GND

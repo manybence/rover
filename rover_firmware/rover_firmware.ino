@@ -18,11 +18,12 @@ void setup() {
 	stepper.setMaxVelocity(800);
   stepper.setControlThreshold(15);
   stepper.setHoldCurrent(5);
-  stepper.setCurrent(15.0); //Maybe increase
+  stepper.setCurrent(5.0); //Maybe increase
   stepper.clearStall();
+  stepper.moveAngle(1);
 
   //Configure needle stepper
-  digitalWrite(M1_PIN, LOW);
+  digitalWrite(M1_PIN, HIGH);
   digitalWrite(M2_PIN, LOW);
   analogWrite(STEP_PIN, 0);
   digitalWrite(EN_PIN, HIGH);
@@ -38,6 +39,7 @@ void loop() {
   //Read microswitches
   if (!digitalRead(N_SWITCH_PIN)){
     Serial.println("Needle switch activated");
+    depth = 0.0;
   } 
   if (!digitalRead(L_SWITCH_PIN)){
     Serial.println("Left switch activated");
@@ -50,42 +52,60 @@ void loop() {
   //while(!Serial.available());
   cmd = Serial.read();
 
+  //Move needle to specific position. Enter command in format: p f.f (example p 12.5). The depth is in mm.
+  if (cmd == 'p'){
+    float depth_target = Serial.parseFloat();
+    if ((depth_target >= 0.0) && (depth_target <= MAX_DEPTH)) {
+      Serial.print("The target depth is: ");
+      Serial.println(depth_target);
+      float d_t = abs(depth_target - depth) * DEPTH_TO_TIME;
+      start_needle(depth_target < depth);
+      delay(d_t);
+      stop_needle();
+      depth = depth_target;
+    }
+  }
 
-  //Move needle down
-  if(cmd == 'r'){
+  //Reset needle position (topmost)
+  else if(cmd == 'r'){
     needle_reset();
+    depth = 0.0;
   }
 
-  //Move needle down
-  if(cmd == 'd'){
-    start_needle(true);
-    delay(500);
-    stop_needle();
-  }
-
-  //Move needle up
-  if(cmd == 'u' && digitalRead(N_SWITCH_PIN)){
+  //Move needle down by 1 mm
+  else if(cmd == 'd' && depth < MAX_DEPTH){
     start_needle(false);
-    delay(500);
+    delay(400);
     stop_needle();
+    depth += 1;
   }
 
-  //TODO: Add uswitch limits!
-  if(cmd == '-' && digitalRead(L_SWITCH_PIN)){
+  //Move needle up by 1 mm
+  else if(cmd == 'u' && digitalRead(N_SWITCH_PIN)){
+    start_needle(true);
+    delay(400);
+    stop_needle();
+    depth -= 1;
+  }
+
+  //Move to the left
+  else if(cmd == '-' && digitalRead(L_SWITCH_PIN)){
     stepper.moveAngle(angle);
   }
   
+  //Move to the right
   else if(cmd == '+' && digitalRead(R_SWITCH_PIN)){
     stepper.moveAngle(-angle);
   }
 
-  else if(cmd == 'p'){
-	  a = stepper.encoder.getAngleMoved();
-	  Serial.println(zero - a * A_TO_MM); 
+  //Get current horizontal position
+  else if(cmd == 'g'){
+    a = stepper.encoder.getAngleMoved();
+    Serial.println(zero - a * A_TO_MM); 
   }
 
-  else if(cmd == 'z')  //zero command               
-  {
+  //Move to zero position on horizontal axis
+  else if(cmd == 'z'){  //zero command               
     stepper.clearStall();
     while (digitalRead(L_SWITCH_PIN) && digitalRead(R_SWITCH_PIN)) {
       stepper.moveAngle(2.0*angle); //larger (0.5mm) step back
