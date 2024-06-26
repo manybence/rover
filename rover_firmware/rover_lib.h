@@ -1,20 +1,20 @@
 #include <UstepperS32.h>
 
 UstepperS32 stepper;
-//float angle = 0.1*(360.0/8.0); //0.1 mmm movement (1mm)amount of degrees to move 8 mm pr revolution
-float angle = 180;
+float angle = 0.1*(360.0/8.0); //0.1 mmm movement (1mm)amount of degrees to move 8 mm pr revolution
 const float A_TO_MM = (36.0 / 8.0) / 204.2692; //Absolute encoder to mm conversion factor (measured emperical value)
 const float MIN_DIST_MM = 0.1;
 const float MAX_DIST_MM = 84.0;
 const int MAXN = 85100; 
-float zero = 0.0;
+float zero_pos = 0.0;
 float a = 0.0;
 
 //Needle seettings
 //PWM frequency is 1 kHz
-float depth = 0.0;
 const float DEPTH_TO_TIME = 1000 * 200 / (0.5 * 1000);   // time / depth = Steps per revolution / Step mode (half) * PWM frequency. Pitch of shaft is 1 mm/rev 
 const float MAX_DEPTH = 28;
+const float MIN_DEPTH = 1;
+float depth = MIN_DEPTH;
 
 //Define IO pins
 int L_SWITCH_PIN = 11;  //Connect COM pin of switch to GND
@@ -41,7 +41,7 @@ void stop_needle(){
 }
 
 void needle_reset(){
-  start_needle(false);
+  start_needle(true);
   while (digitalRead(N_SWITCH_PIN)){}
   stop_needle();
 }
