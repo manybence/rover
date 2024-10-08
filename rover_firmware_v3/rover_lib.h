@@ -1,6 +1,7 @@
 #include "UstepperS32.h"
 #include "hardware.h"
 #include "communication.h"
+#include "base64.h"
 
 struct LogEntry {
   int xpos;
@@ -25,34 +26,54 @@ void logXpos(int xpos) {
 }
 
 void readLog() {
-  if (bufferFull) {
-    for (int i = logIndex; i < BUFFER_SIZE; i++) {
-      Serial.print("X");
-      Serial.print(logBuffer[i].xpos);
-      Serial.print("T");
-      Serial.println(logBuffer[i].time);
-    }
-  }
+  int t0 = logBuffer[0].time;
   for (int i = 0; i < logIndex; i++) {
-    Serial.print("X");
-    Serial.print(logBuffer[i].xpos);
-    Serial.print("T");
-    Serial.println(logBuffer[i].time);
+    response += "X" + String(logBuffer[i].xpos) + "T" + String(logBuffer[i].time - t0) + "\n";
   }
 }
 
-void execute_command(Command command) {
+void readLogCondensed() { // condensed format
+  int td;
+  char str[5];
+  if (logIndex >= 1) {
+
+    // Attach X positions
+    response = "[" + String(logBuffer[0].xpos) + "," + String(logBuffer[logIndex-1].xpos) + "]";
+
+    // Attach time difference
+    for (int i = 1; i < logIndex; i++) {
+      td = logBuffer[i].time-logBuffer[i-1].time;
+      if (td > 4095) td = 4095;
+      String base64str = String(Base64::b64ConvertInt(td, 2).c_str());
+      base64str.toCharArray(str, 5);
+      response += str;
+    }
+
+    // Attach end of line symbol
+    response += "#\n";
+  }
+}
+
+void execute_command(Command command) { 
   switch (command.cmd) {
 
+    case CMD_RECONFIG: {
+      config_hardware();
+      response = "Hardware reconfigured.";
+      break;
+    }
+
     case CMD_SET_SPEED: {
-      Serial.println("Setting speed to: ");
-      stepper.setMaxVelocity(command.payload[0] * 25.433);
+      if (command.payload > MIN_SPEED) {
+        stepper.setMaxVelocity(command.payload * MM_TO_STEP);
+        response = "Velocity set to: " + String(command.payload, 2) + " mm/s";
+      }
       break;
     }
 
     case CMD_RESET_NEEDLE: {
-      Serial.println("Resetting needle pos");
       needle_reset();
+      response = "Needle resetted";
       break;
     }
 
@@ -67,66 +88,57 @@ void execute_command(Command command) {
     }
 
     case CMD_MOVE_NEEDLE: {
-      Serial.println("Moving needle to pos: ");
-      needle_to_pos(command.payload[0]);
+      needle_to_pos(command.payload);
       break;
     }
     
     case CMD_READ_NEEDLE: {
-      Serial.print("Reading needle pos: ");
-      Serial.println(depth); 
+      response = "Reading needle pos: " + String(depth, 2);
       break;
     }
 
     case CMD_RESET_CARRIAGE: {
-      Serial.println("Resetting carriage pos");
       reset_carriage();
       break;
     }
 
     case CMD_CARRIAGE_LEFT: {
-      if (digitalRead(L_SWITCH_PIN) && zeroed) {
-        Serial.println("Moving carriage left by: ");
-        stepper.moveAngle(-command.payload[0]);
-      }
+      carriage_left(command.payload);
       break;
     }
 
     case CMD_CARRIAGE_RIGHT: {
-      if (zeroed && digitalRead(R_SWITCH_PIN)){
-        Serial.println("Moving carriage right by: ");
-        stepper.moveAngle(command.payload[0]);
-      }
+      carriage_right(command.payload);
       break;
     }
 
     case CMD_MOVE_CARRIAGE: {
-      Serial.println("Moving carriage to pos: ");
-      carriage_to_pos(command.payload[0]);
+      carriage_to_pos(command.payload);
       break;
     }
       
     case CMD_READ_CARRIAGE: {
-      Serial.print("Reading carriage pos: ");
-      Serial.println(read_carriage());
+      response = "Reading carriage pos: " + String(read_carriage(), 2);
       break;
     }
       
     case CMD_READ_TIME: {
-      Serial.println("Reading time: ");
-      Serial.println(HAL_GetTick() - m);
-      Serial.println(stopWatchGet());
+      response = "Reading time: " + String(stopWatchGet()/84000);
       break;
     }
 
     case CMD_READ_LOG: {
-      Serial.println("Reading log: ");
       readLog();
       break;
     }
 
+    case CMD_READ_LOG_COND: {
+      readLogCondensed();
+      break;
+    }
+
     default:
-      Serial.println("Unknown Command");
+      response = "Unknown Command";
       break;
   }
 }

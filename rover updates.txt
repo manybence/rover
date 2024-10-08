@@ -1,19 +1,10 @@
 TODO:
-1. Robustness of start up and comm prot
-2. does baud rate matter?
-3. flow control / no-flow control, etc
-4. Find things that are not working
-Windows - Linux problems
-Dedicated command compiler?
-Add horizontal limits
-Make robust comm protocol - timeout happens while typing
-Timer better resolution (maybe hw processor reading directly)
-Left switch activated - only write once
-check implemented library functions - maybe they would be useful
-comm prot - log file
-
-
+- Robustness of start up and comm prot
+- Windows - Linux problems?
+- Dedicated command compiler?
+- Make robust comm protocol - timeout happens while typing
+- Timer better resolution (maybe hw processor reading directly)
+- comm prot - log file
 - Status display correctly
 - Comments - default value = empty
 
-TODO priorities

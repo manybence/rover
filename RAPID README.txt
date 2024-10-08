@@ -18,6 +18,9 @@ Setup
 - Connect PC to port X10 via Ethernet cable.
 - Connect A-mode and Doppler probes to any of X1-X4. Remember to select the correct port on the GUI before scanning.
 
+The firmware (and different processing scripts) of the Raspberry Pi are located at:
+home/rapid/projects/app
+
 1. Open RealVNC viewer, locate rapidunit and connect. It might take a while for the Raspberry Pi to boot after being powered on.
 2. Open Programming/Thonny to access the Python code for the web GUI. 
 3. Run the script to start the GUI.
