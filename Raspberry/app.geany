@@ -28,12 +28,13 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=4
+current_page=5
 FILE_NAME_0=794;C++;0;EUTF-8;0;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Fmain.cpp;0;4
-FILE_NAME_1=8961;C++;0;EUTF-8;1;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Fscanning.h;0;4
+FILE_NAME_1=7041;C++;0;EUTF-8;1;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Fscanning.h;0;4
 FILE_NAME_2=3716;C++;0;EUTF-8;0;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Fmotors.h;0;4
 FILE_NAME_3=11682;C++;0;EUTF-8;0;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Fserial_comm.h;0;4
 FILE_NAME_4=554;C++;0;EUTF-8;0;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Ftest_communiction.cpp;0;4
+FILE_NAME_5=0;None;0;EUTF-8;1;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Fdata%2Flog0014.csv;0;4
 
 [VTE]
 last_dir=/home/rapid

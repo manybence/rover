@@ -4,9 +4,13 @@ import subprocess
 import pandas as pd
 import numpy as np
 import scipy.signal as signal
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from nicegui import app, ui
 import json
+
+
 
 # Define the directory containing the files
 FILES_DIRECTORY = '/home/rapid/projects/app/data/'
@@ -55,6 +59,7 @@ def process_image():
     plt.imshow(bitmap.T, cmap='gray', aspect='auto')
     plt.axis('off') 
     plt.savefig(file_path.replace('.csv', '.png').replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
+    plt.close()
     
     
 def run_cpp_program(current_values):

@@ -102,7 +102,7 @@ int processDopplerMode() {
     std::vector<std::tuple<float, int, long long, int, int, std::vector<int16_t>>> dataBuffer;
 
     MotorSpeed(10);            //[mm/s]
-    MoveMotorToPosition(250);  //[to be adjustable in the UI]
+    MoveMotorToPosition(52);  //[to be adjustable in the UI]
 
     usleep(10000000);
     printf("Initialisation of HW\n");
@@ -114,13 +114,10 @@ int processDopplerMode() {
 
     resetFPGA();
     dataarray.clear();
-    //printf(DOPPLER_AUTOGAIN);
     autogain = stringToBool(DOPPLER_AUTOGAIN);
     printf("autogain value: %s\n", autogain ? "true" : "false");
     for (idx = offsetmin; idx < offsetmax/*STGHIGH*/; idx++) { //need to decide how HILO is controlled in HW
-        //printf("for idx:%2d\n", idx);
 
-        //resetFPGA();
         _dacval  = dac_val[STRATEG[idx]]; //initial table guesses
         _offset  = DOPP_OF[STRATEG[idx]];
         _hiloval = hiloval[STRATEG[idx]];
@@ -188,7 +185,8 @@ int processDopplerMode() {
                 dataBuffer.emplace_back(xpos, STRATEG[idx], microseconds, _dacval, _offset, raw_input_data);
         };
     };
-        // Write all buffered data to CSV
+    
+	// Write all buffered data to CSV
    if (SAVE_AS_CSV) {
         std::ofstream csvFile(datfilename);
         if (!csvFile.is_open()) {

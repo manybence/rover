@@ -22,9 +22,11 @@ The firmware (and different processing scripts) of the Raspberry Pi are located 
 home/rapid/projects/app
 
 1. Open RealVNC viewer, locate rapidunit and connect. It might take a while for the Raspberry Pi to boot after being powered on.
-2. Open Programming/Thonny to access the Python code for the web GUI. 
-3. Run the script to start the GUI.
-4. Open the browser and search for rapidunit[number]:8080 to access the GUI.
+2. Enter the IP address: rapidunit3.local
+3. Enter username: rapid; password: 5353
+4. Open Programming/Thonny to access the Python code for the web GUI. 
+5. Run the script to start the GUI.
+6. Open the browser and search for rapidunit[number]:8080 to access the GUI.
 
 -----------------------------------------------------------------------------------
 In case you want to modify the firmware that is responsible for the ultrasound scanning process and drives the motors:
