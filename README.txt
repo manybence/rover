@@ -17,6 +17,7 @@ Setup
 - Connect motor driver board to port X9 via USB-C cable. 
 - Connect PC to port X10 via Ethernet cable.
 - Connect A-mode and Doppler probes to any of X1-X4. Remember to select the correct port on the GUI before scanning.
+- Connect 12V power to the motor driver board.
 
 The firmware (and different processing scripts) of the Raspberry Pi are located at:
 home/rapid/projects/app
