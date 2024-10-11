@@ -22,13 +22,13 @@ std::vector<int> positionSeries;
 void MoveMotorToPosition(float xpos) {
 
     pack_command('m', xpos);
-    std::cout << readMessage(fd, 40) << std::endl;
+    std::cout << readResponse() << std::endl;
 }
 
 void MotorSpeed(float xspeed) {
 
     pack_command('s', xspeed);
-    std::cout << readMessage(fd, 5) << std::endl;
+    std::cout << readResponse() << std::endl;
 }
 
 void MoveMotor500um(int sleepdelay) {
@@ -40,11 +40,11 @@ void InitMotorPosition() {
     
     // Reconfiguration
     pack_command('c' , 0);
-    std::cout << readMessage(fd, 10) << std::endl;
+    std::cout << readResponse() << std::endl;
     
     // Reset to zero position
     pack_command('z', 0);
-    std::cout << readMessage(fd, 30) << std::endl;
+    std::cout << readResponse() << std::endl;
 }
 
 float interpolatePosition(float time) {
@@ -71,7 +71,6 @@ float interpolatePosition(float time) {
 void decodeLog(const std::string& encodedLog) {
     
     std::cout << "Decoding log\n" << std::endl;
-    std::cout << encodedLog << std::endl;
     
     int X0, X1, T;
     int startIndex, commaIndex, endIndex;
@@ -104,7 +103,6 @@ void decodeLog(const std::string& encodedLog) {
     // Process the encoded delta times
     deltaEncoded = encodedLog.substr(endIndex + 1, encodedLog.find('#') - endIndex - 1);
 
-
     positionSeries.push_back(X0);
     timeSeries.push_back(0);
     
@@ -128,6 +126,10 @@ void decodeLog(const std::string& encodedLog) {
         T += deltaTime;
         timeSeries.push_back(T);
     }
+    
+    std::cout << "Starting pos: " << X0 << std::endl;
+    std::cout << "Ending pos: " << X1 << std::endl;
+    std::cout << "Time elapsed: " << T << std::endl;
 
 
 } 
@@ -138,7 +140,7 @@ void GetLog() {
     pack_command('l', 0);   // Send command to read log
     
     // Read log bytes
-    std::string receivedData = readMessage(fd, 20);
+    std::string receivedData = readResponse();
     decodeLog(receivedData);
 }
 

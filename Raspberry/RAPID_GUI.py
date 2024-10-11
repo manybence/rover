@@ -2,14 +2,13 @@ from nicegui import app, ui
 import os
 from fastapi.responses import FileResponse
 from lib_gui import process_handlers as ph
+from lib_gui import components
 
 
 if not os.path.exists(ph.FILES_DIRECTORY):
     os.makedirs(ph.FILES_DIRECTORY)
 
-#Define scanning status
-status = "Standby"
-        
+      
         
 # Function to update the scanning status
 def set_status(new_status):
@@ -24,6 +23,7 @@ def set_status(new_status):
         status_label.style("color:black")
         
 def update_values():
+    print("Scanning started")
     for key in current_values.keys():
         current_values[key] = eval(f'{key}_input').value
     app.storage.general['current_values'] = current_values
@@ -43,17 +43,15 @@ current_values = {k: current_values[k] for k in defaults.keys()}
 ui.page_title("RAPID GUI")
 
 # Header
-with ui.header().style('background-color: #C30010; color: white; text-align: center; padding: 1em;'):
-    ui.label('RAPID ULTRASOUND UNIT 3 CONTROL PANEL').style('font-size: 2em; font-weight: bold;')
+components.create_header()
     
 # Status label
-with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
-    status_label = ui.label("STATUS: " + status).style('font-size: 20px; font-weight: bold; color: black; text-align: center; width: 100%;')
+status_label = components.create_status_label()
 
 # Scanning
 with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
     ui.label('ACTION').style('font-weight: bold;').style('width: 100%;')
-    MODE_input = ui.select(['A-MODE', 'DOPPLER', 'NEEDLE'], label='MODE OF OPERATION', value=current_values['MODE']).style('width: 33%;')
+    MODE_input = ui.select(['A-MODE', 'DOPPLER', 'M-MODE', 'NEEDLE'], label='MODE OF OPERATION', value=current_values['MODE']).style('width: 33%;')
     NEEDLEPOS_input = ui.number(label='NEEDLE DEPTH (mm)', value=current_values['NEEDLEPOS'], min=current_values['ZPOSMIN'], max=current_values['ZPOSMAX'], step=0.1, format='%.1f').style('width: 33%;')
     COMMENT_input = ui.textarea(label='Comments', value=current_values['COMMENT']).style('width: 100%;')
     ui.button('START', on_click=update_values).style('width: 100%;')
@@ -61,17 +59,22 @@ with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
 # Settings
 with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
     with ui.expansion('SETTINGS', icon='settings').classes('w-full').style('font-weight: bold;'):
+        
+        # Movement settings
         with ui.expansion('MOVEMENT', icon='settings').classes('w-full').style('font-weight: bold;'):
             ui.label('X-MOVEMENT (CARRIAGE RANGE)').style('font-weight: bold;')
             with ui.row().style('width: 100%;'):
                 XPOSMIN_input = ui.number(label='MIN (mm)', value=current_values['XPOSMIN'], min=0.0, max=100.0, step=0.1, format='%.1f').style('width: 25%;')
                 XPOSMAX_input = ui.number(label='MAX (mm)', value=current_values['XPOSMAX'], min=0.0, max=100.0, step=0.1, format='%.1f').style('width: 25%;')
                 XSTEP_input = ui.number(label='STEP (mm)', value=current_values['XSTEP'], min=0.1, max=5.0, step=0.1, format='%.1f').style('width: 25%;')
-                
+                SPEED_input = ui.number(label='SPEED (mm/s)', value=current_values['SPEED'], min=0.5, max=50.0, step=0.1, format='%.1f').style('width: 25%;')
+
             ui.label('Z-MOVEMENT (NEEDLE RANGE)').style('font-weight: bold;')
             with ui.row().style('width: 100%;'):
                 ZPOSMIN_input = ui.number(label='MIN (mm)', value=current_values['ZPOSMIN'], min=0.0, max=30.0, step=0.1, format='%.1f').style('width: 25%;')
                 ZPOSMAX_input = ui.number(label='MAX (mm)', value=current_values['ZPOSMAX'], min=0.0, max=30.0, step=0.1, format='%.1f').style('width: 25%;')
+        
+        # A-mode settings
         with ui.expansion('A-MODE', icon='settings').classes('w-full').style('font-weight: bold;'):
             with ui.row():
                 A_MODE_AUTOGAIN_input = ui.checkbox('AUTO GAIN', value=current_values['A_MODE_AUTOGAIN']).style('width: 40%;')
@@ -83,7 +86,8 @@ with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
                 A_MODE_GAINRATE_input = ui.number(label='GAINRATE', value=current_values['A_MODE_GAINRATE']).style('width: 40%;')
                 A_MODE_FILTERTYPE_input = ui.select(['BPF', 'HPF'], label='FILTERTYPE', value=current_values['A_MODE_FILTERTYPE']).style('width: 40%;')
                 A_MODE_SCANLINES_input = ui.number('SCANLINES', value=current_values['A_MODE_SCANLINES'], min=1, max=1000).style('width: 40%;')
-
+    
+        # Doppler settings
         with ui.expansion('DOPPLER', icon='settings').classes('w-full').style('font-weight: bold;'):
             with ui.row():
                 DOPPLER_AUTOGAIN_input = ui.checkbox('AUTO GAIN', value=current_values['DOPPLER_AUTOGAIN']).style('width: 40%;')
@@ -119,13 +123,6 @@ with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
                     return ui.label('File not found'), 404
     
 # Display latest scan image
-with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
-    ui.label('LATEST SCAN').style('font-weight: bold;')
-    latest_bitmap = ph.find_latest_bitmap(ph.FILES_DIRECTORY)
-    ui.label(latest_bitmap)
-    if latest_bitmap:
-        ui.image(latest_bitmap).style('width: 100%;')
-    else:
-        ui.notify('No bitmap found after scan.')
+components.create_display()
     
 ui.run(show=False)

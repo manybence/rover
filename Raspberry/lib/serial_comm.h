@@ -46,6 +46,7 @@ void SendParametersToStream() {
     std::cout << "Parameters:"                                  << std::endl;
     std::cout << "XPOSMIN: "            << XPOSMIN              << std::endl;
     std::cout << "XPOSMAX: "            << XPOSMAX              << std::endl;
+    std::cout << "XSPEED: "             << XSPEED               << std::endl;
     std::cout << "ZPOSMIN: "            << ZPOSMIN              << std::endl;
     std::cout << "ZPOSMAX: "            << ZPOSMAX              << std::endl;
     std::cout << "A_MODE_OFFSETMIN: "   << A_MODE_OFFSETMIN     << std::endl;
@@ -77,9 +78,10 @@ void GetParameters(int argc, char* argv[]) {
     int i = 1;
     
     // Override defaults with command-line arguments
-    if (argc > 26) {
+    if (argc > 27) {
         XPOSMIN              = std::string(argv[i++]);
         XPOSMAX              = std::string(argv[i++]);
+        XSPEED               = std::string(argv[i++]);
         ZPOSMIN              = std::string(argv[i++]);
         ZPOSMAX              = std::string(argv[i++]);
         A_MODE_OFFSETMIN     = std::string(argv[i++]);
@@ -136,6 +138,7 @@ void GetParameters(int argc, char* argv[]) {
 
     xposmin   = stringToFloat(XPOSMIN);
     xposmax   = stringToFloat(XPOSMAX);
+    xspeed    = stringToFloat(XSPEED);
     xstep     = stringToFloat(XSTEP);
     zposmin   = stringToFloat(ZPOSMIN);
     zposmax   = stringToFloat(ZPOSMAX);
@@ -147,9 +150,6 @@ int saveParameters(int argc, char* argv[]){
 	// Read incoming parameters
     GetParameters(argc, argv);
 
-    // Display parameters
-    SendParametersToStream();
-
     // Ensure the data directory exists
     std::string directory = "data";
     if (!std::filesystem::exists(directory)) {
@@ -158,7 +158,6 @@ int saveParameters(int argc, char* argv[]){
     };
 
     // Generate a unique filename
-    std::cerr << "Debug: Generating filename\n";
     std::string filename = generate_filename(directory);
     logfilename = filename;
     datfilename = filename;
@@ -170,7 +169,6 @@ int saveParameters(int argc, char* argv[]){
 
 
     // Open the file
-    std::cerr << "Debug: Opening file: " << logfilename << "\n";
     std::ofstream outfile(logfilename);
     if (!outfile) {
         std::cerr << "Error: Could not open file " << logfilename << " for writing\n";
@@ -178,7 +176,6 @@ int saveParameters(int argc, char* argv[]){
     };
 
     // Redirect std::cout to the file
-    std::cerr << "Debug: Redirecting stdout to file\n";
     std::streambuf* coutbuf = std::cout.rdbuf();
     std::cout.rdbuf(outfile.rdbuf());
 
@@ -187,7 +184,8 @@ int saveParameters(int argc, char* argv[]){
 
     // Restore std::cout
     std::cout.rdbuf(coutbuf);
-    std::cerr << "Debug: Restored stdout\n";
+    
+    std::cout << "Parameters saved to " << logfilename << "\n";
     return 0;
 
 }
@@ -241,8 +239,8 @@ int set_interface_attribs(int fd, int speed, int parity) {
     tty.c_lflag = 0;                                // No canonical processing, no echo, no signaling chars    
     tty.c_oflag = 0;                                // No remapping, no delays
     
-    tty.c_cc[VMIN] = 0;     // Read doesn't block
-    tty.c_cc[VTIME] = 100;    // 10 sec read timeout
+    tty.c_cc[VMIN] = 1;     // Blocking mode (waiting until message arrives)
+    tty.c_cc[VTIME] = 200;    // 20 sec read timeout
     
     tty.c_iflag &= ~(IXON | IXOFF | IXANY);     // Shut off Xon/XOff control
     tty.c_cflag |= (CLOCAL | CREAD);            // Ignore modem control, enable reading
@@ -251,7 +249,7 @@ int set_interface_attribs(int fd, int speed, int parity) {
     tty.c_cflag &= ~CSTOPB;
     tty.c_cflag &= ~CRTSCTS;
     
-    
+    // Setting the given attributes
     if (tcsetattr(fd, TCSANOW, &tty) != 0) {
         printf("Error from tcsetattr: %s\n", strerror(errno));
         return -1;
@@ -278,43 +276,20 @@ void InitMotorCommunication() {
     tcflush(fd, TCIOFLUSH); // Discard both input and output data
 }
 
-std::string readMessage(int fd, int timeoutSec=10) {
+std::string readResponse() {
     
     unsigned char rx_buffer[32000];
-
-    // Set a timeout for the select function
-    struct timeval timeout;
-    timeout.tv_sec = timeoutSec;  // seconds
-    timeout.tv_usec = 0; // 0 microseconds
-
-    // Monitor the file descriptor for reading
-    fd_set read_fds;
-    FD_ZERO(&read_fds);
-    FD_SET(fd, &read_fds);
-
-    // Wait until data is available to be read (or timeout occurs)
-    int result = select(fd + 1, &read_fds, NULL, NULL, &timeout);
     
-    if (result > 0) {  // Data is ready to be read
-        if (FD_ISSET(fd, &read_fds)) {
-            int rx_length = read(fd, rx_buffer, sizeof(rx_buffer) - 1); // Read incoming bytes
-
-            if (rx_length > 0) {
-                rx_buffer[rx_length] = '\0';  // Null-terminate the string
-                return std::string(reinterpret_cast<char*>(rx_buffer)); // Return the received data
-            } 
-            else if (rx_length == -1) {
-                std::cerr << "Error reading from fd." << std::endl;
-                return "Reading error";
-            }
-        }
-    } 
-    else if (result == 0) {
-        std::cerr << "Timeout: No data received within timeout." << std::endl;
+    int length = read(fd, rx_buffer, sizeof(rx_buffer));  // Read will timeout after 20 seconds if no data is available
+    if (length < 0) {
+        return "Error reading from serial port";
+    } else if (length == 0) {
         return "Timeout error";
+    } else {
+        rx_buffer[length] = '\0';  // Null-terminate the string
+        return std::string(reinterpret_cast<char*>(rx_buffer)); // Return the received data
     }
     
-
     return "";
 }
 

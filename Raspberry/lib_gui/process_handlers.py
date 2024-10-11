@@ -11,11 +11,11 @@ from nicegui import app, ui
 import json
 
 
-
 # Define the directory containing the files
 FILES_DIRECTORY = '/home/rapid/projects/app/data/'
 executable_path = '/home/rapid/projects/app/main'
 default_path = '/home/rapid/projects/app/lib_gui/default_parameters.json'
+
 
 def read_default_values():
     
@@ -48,7 +48,7 @@ def find_latest_data(directory):
 def process_image():
     data_range = 4003
     file_path = find_latest_data(FILES_DIRECTORY)
-    print(file_path)
+    print("Processing image: ", file_path)
     df = pd.read_csv(file_path)
     data_columns = [f'D[{i}]' for i in range(data_range)]
     data = df[data_columns].values

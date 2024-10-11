@@ -7,6 +7,7 @@
 #include "signal_processing.h"
 #include "bmp_gen.h"
 #include "relay.h"
+#include "file_handler.h"
 
 #define DOPPLER_START_PULSE (10 * 128)
 #define DOPPLER_END_PULSE   ((10 * 128) + 128)
@@ -29,10 +30,6 @@
 #define MOVEMOTOR         true
 #define CAP_BSCAN         true
 #define CAP_DOPPLER       true
-
-//A-MODE 90 deg., DMax=63.7 mm, fsam = 60 MHz, BufferLength = 4004
-#define A_MODE_BUFLEN 4004
-#define A_MODE_READOUT_OFFSET 960
 
 int start_pulse;
 int end_pulse;
@@ -95,23 +92,27 @@ int processDopplerMode() {
     std::vector<int32_t> filtereddata(ARRAY_SIZE);
     std::vector<double> hilbertindata = {};
     std::cerr << "Debug: Starting processDopplerMode function\n";
-    // Parameters with default values
-
-    printf("main loop begins\n");
-    // Buffer to store raw input data
-    std::vector<std::tuple<float, int, long long, int, int, std::vector<int16_t>>> dataBuffer;
-
-    MotorSpeed(10);            //[mm/s]
-    MoveMotorToPosition(52);  //[to be adjustable in the UI]
-
-    usleep(10000000);
-    printf("Initialisation of HW\n");
+    
+	// Initialize hardware
+	printf("Initialisation of HW\n");
     InitHW();
-    //xstep = 1.0;
+    
+	// Move to scanning position
+	std::cout << "Moving to target position" << std::endl;
+	tcflush(fd, TCIOFLUSH); // Discard both input and output data
+    float motortarget = xposmax; // [mm]
+    MotorSpeed(xspeed);//mm pr sec  ..
+    MoveMotorToPosition(motortarget); //test - ok full range movement
+    int expectedtime_us = GuardTime + (motortarget * 1000000) / xspeed;
+    usleep(expectedtime_us);
+
+	// Buffer to store raw input data
+    DataBufferType dataBuffer;
     std::vector<std::vector<double>> dataarray;
+    
+    // Start scanning
     auto then    = std::chrono::high_resolution_clock::now();
     auto then_us = std::chrono::duration_cast<std::chrono::microseconds>(then.time_since_epoch()).count();
-
     resetFPGA();
     dataarray.clear();
     autogain = stringToBool(DOPPLER_AUTOGAIN);
@@ -159,8 +160,6 @@ int processDopplerMode() {
                     _dacval = newdacval;
                    // if (_dacval == 0) {_hiloval = 1; _dacval = 1023;}                   //reached max gain then try to get more gain if possible
                 }
-                printf("reps, dacval: %d %d\n", reps, _dacval);
-
               }
             }
 
@@ -187,28 +186,7 @@ int processDopplerMode() {
     };
     
 	// Write all buffered data to CSV
-   if (SAVE_AS_CSV) {
-        std::ofstream csvFile(datfilename);
-        if (!csvFile.is_open()) {
-            std::cerr << "Failed to open the CSV file for writing." << std::endl;
-            return 1;
-        }
-        csvFile << "XPOS,STRATEG,TIME,DACVAL,OFFSET";
-        for (size_t i = 0; i < ARRAY_SIZE; ++i) {
-            csvFile << ",D[" << i << "]";
-        }
-        csvFile << "\n";
-        for (const auto& entry : dataBuffer) {
-            csvFile << 0 << "," << std::get<1>(entry) << "," << std::get<2>(entry) << "," << std::get<3>(entry) << "," << std::get<4>(entry);
-            const auto& rawData = std::get<5>(entry);
-            for (size_t i = 0; i < ARRAY_SIZE; ++i) {
-                csvFile << "," << rawData[i];
-            }
-            csvFile << "\n";
-        }
-        csvFile.close();
-        std::cout << "CSV file written successfully." << std::endl;
-   }
+   if (SAVE_AS_CSV) save_data_standing(dataBuffer);
    
    // Release hardware
    release_HW();
@@ -221,7 +199,6 @@ int processAMode() {
     int i, x, buf_adr;
     int expectedtime_us;
     int _dacval, _offset, _hiloval;
-    int motorspeed;
     int motortarget;
     char txBuf[ARRAY_SIZE];
     char rxBuf[ARRAY_SIZE];
@@ -236,7 +213,7 @@ int processAMode() {
     std::cerr << "Debug: Starting processAMode function\n";
 
     // Buffer to store raw input data
-    std::vector<std::tuple<float, int, long long, int, int, std::vector<int16_t>>> dataBuffer;
+    DataBufferType dataBuffer;
     std::vector<std::vector<double>> dataarray;
 
 	// Initialise hardware
@@ -246,11 +223,10 @@ int processAMode() {
 	// Start scanning motion
 	std::cout << "Start Scanning" << std::endl;
 	tcflush(fd, TCIOFLUSH); // Discard both input and output data
-    motorspeed = 8;   // [mm/s]
-    motortarget = 52.5; // [52.5 mm]
-    MotorSpeed(motorspeed);//mm pr sec  ..
+    motortarget = xposmax; // [mm]
+    MotorSpeed(xspeed);//mm pr sec  ..
     MoveMotorToPosition(motortarget); //test - ok full range movement
-    expectedtime_us = GuardTime + (motortarget * 1000000) / motorspeed;
+    expectedtime_us = GuardTime + (motortarget * 1000000) / xspeed;
 
 	// Configure FPGA
     _dacval = manualgain;
@@ -300,59 +276,99 @@ int processAMode() {
     GetLog();
 
     // Write all buffered data to CSV
-    std::cout << "Saving log to CSV file." << std::endl;
-    if (SAVE_AS_CSV) {
-		std::ofstream csvFile(datfilename);
-        if (!csvFile.is_open()) {
-            std::cerr << "Failed to open the CSV file for writing." << std::endl;
-            return 1;
-        }
-        csvFile << "XPOS,STRATEG,TIME,DACVAL,OFFSET";
-        if (IsDopplerMode) {
-            for (size_t i = 0; i < ARRAY_SIZE; ++i) {
-                csvFile << ",D[" << i << "]";
-            }
-            csvFile << "\n";
-            float ip0;
-            ip0 = -10000.0;
-            for (const auto& entry : dataBuffer) {
-                float tm = std::get<2>(entry) / 1000.0;
-                float ip = interpolatePosition(tm);
-                if (abs(ip0-ip) < 0.01) break;
-                csvFile << ip << "," << std::get<1>(entry) << "," << std::get<2>(entry) << "," << std::get<3>(entry) << "," << std::get<4>(entry);
-                const auto& rawData = std::get<5>(entry);
-                for (size_t i = 0; i < ARRAY_SIZE; ++i) {
-                    csvFile << "," << rawData[i];
-                }
-                csvFile << "\n";
-                ip0 = ip;
-            }
-        } else { //A_MODE
-            for (size_t i = 0; i < A_MODE_BUFLEN; ++i) {
-                csvFile << ",D[" << i << "]";
-            }
-            csvFile << "\n";
-            float ip0;
-            ip0 = -10000.0;
-            for (const auto& entry : dataBuffer) {
-                float tm = std::get<2>(entry) / 1000.0;
-                float ip = interpolatePosition(tm);
-                if (abs(ip0-ip) < 0.01) break;
-                csvFile << ip << "," << std::get<1>(entry) << "," << std::get<2>(entry) << "," << std::get<3>(entry) << "," << std::get<4>(entry);
-                const auto& rawData = std::get<5>(entry);
-                for (size_t i = 0; i < A_MODE_BUFLEN; ++i) {
-                    csvFile << "," << rawData[i];
-                }
-                csvFile << "\n";
-                ip0 = ip;
-            }
-        }
+    if (SAVE_AS_CSV) save_data_moving(dataBuffer);
+    
+    return 0;
+}
 
-        csvFile.close();
-        std::cout << "CSV file written successfully." << std::endl;
+int processMMode() {
+	
+	float xpos = 0.0;
+    int i, x, buf_adr;
+    int expectedtime_us;
+    int _dacval, _offset, _hiloval;
+    int motortarget;
+    char txBuf[ARRAY_SIZE];
+    char rxBuf[ARRAY_SIZE];
+    DACDeltaCalculator dacDelta;
+    memset(BModebuffer, 0, sizeof(BModebuffer));
+
+    //A_MODE_BUFLEN is a the 4004 samples deep buffer - enough to hold full depth A_MODE
+    std::vector<int16_t> raw_input_data_A(A_MODE_BUFLEN);
+    std::vector<double_t> raw_input_data_d_A(A_MODE_BUFLEN);
+    std::vector<int32_t> filtereddata_A(A_MODE_BUFLEN);
+    std::vector<double> hilbertindata = {};
+    std::cerr << "Debug: Starting processMMode function\n";
+
+    // Buffer to store raw input data
+    DataBufferType dataBuffer;
+    std::vector<std::vector<double>> dataarray;
+
+	// Initialise hardware
+    printf("Initialisation of HW");
+    InitHW();
+
+	// Move to scanning position
+	std::cout << "Moving to target position" << std::endl;
+	tcflush(fd, TCIOFLUSH); // Discard both input and output data
+    motortarget = xposmax; // [mm]
+    MotorSpeed(xspeed);//mm pr sec  ..
+    MoveMotorToPosition(motortarget); //test - ok full range movement
+    expectedtime_us = GuardTime + (motortarget * 1000000) / xspeed;
+    usleep(expectedtime_us);
+
+	// Configure FPGA
+    _dacval = manualgain;
+    _offset = 0;//15; //Somehow the first bit is overwhelmed by tx ringing
+    _hiloval = 0;
+    auto then = std::chrono::high_resolution_clock::now();
+    auto then_us = std::chrono::duration_cast<std::chrono::microseconds>(then.time_since_epoch()).count();
+    
+    // Start FPGA scanning
+    std::cout << "Start Scanning" << std::endl;
+    resetFPGA();
+    fpga(txpat, _dacval, _hiloval, _offset);
+    while (!stopFlag) {
+        dataarray.clear();
+            fpga_scan();
+            auto now = std::chrono::high_resolution_clock::now();
+            auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count() - then_us;
+            if (scanning_time < microseconds){
+                stopFlag = true; // To end and display time results (test)
+            }
+
+            // Read first sample twice (dummy stuff in spi buffer need to be discarded so a read from any addres would do)
+            buf_adr = A_MODE_READOUT_OFFSET;
+            txBuf[0] = (buf_adr >> 8) & 0xff;
+            txBuf[1] = buf_adr & 0xff;
+            spiXfer(h, txBuf, rxBuf, 2);
+
+            // Read captured line
+            for (i = 0; i < A_MODE_BUFLEN; i++) {
+                buf_adr = i + A_MODE_READOUT_OFFSET;
+                txBuf[0] = (buf_adr >> 8) & 0xff;
+                txBuf[1] = buf_adr & 0xff;
+                spiXfer(h, txBuf, rxBuf, 2);
+                x = ((rxBuf[1] << 8) | (rxBuf[0] & 0xfc));
+                raw_input_data_A[i] = x;
+            };
+            // Buffer the data in RAM
+            dataBuffer.emplace_back(xpos, _hiloval, microseconds, _dacval, _offset, raw_input_data_A);
+       // };
 
     }
+
+	// Release hardware
+    release_HW();
+
+	// Get position log
+    std::cout << "Get Log" << std::endl;
+    GetLog();
+
+    // Write all buffered data to CSV
+    if (SAVE_AS_CSV) save_data_standing(dataBuffer);
     return 0;
+
 }
 
 int processNeedleMode() {

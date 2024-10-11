@@ -60,23 +60,21 @@ void TestPorts(int p1, int p2){
 
 void InitHW() {
         
+    printf("Testing relays...\n");
     std::string port;
     initializeGPIO();
     gpioWrite(IO_EN3V3, 1); //turn on 3V3 rail
     gpioWrite(IO_EN5V,  1); //turn on 5V rail
-    printf("Wait 3 sec to fully rampup +-100V rails\n");
 
     //Exercise ports (toggle Relay K300)
-    printf("While waiting test relay K300\n");
     TestPorts(PORT_X3, PORT_X1);
     usleep(ONESEC);
 
     //Exercise ports (toggle Relay K301)
-    printf("While waiting test relay K301\n");
     TestPorts(PORT_X4, PORT_X3);
     usleep(ONESEC);
-
-    printf("While waiting test both relay K300 K301\n");
+    
+    // Exercise ports
     TestPorts(PORT_X1, PORT_X4);
     usleep(ONESEC);
 

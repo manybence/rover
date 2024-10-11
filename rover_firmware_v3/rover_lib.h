@@ -25,6 +25,14 @@ void logXpos(int xpos) {
   }
 }
 
+void update_log() {
+  int currentXpos = round((stepper.encoder.getAngleMoved()- zero_pos) * ANGLE_TO_MM);
+  if (abs(currentXpos - lastXpos) >= CONTROL_THRESHOLD) {
+    logXpos(currentXpos);
+    lastXpos = currentXpos;
+  }
+}
+
 void readLog() {
   int t0 = logBuffer[0].time;
   for (int i = 0; i < logIndex; i++) {
@@ -67,6 +75,9 @@ void execute_command(Command command) {
       if (command.payload > MIN_SPEED) {
         stepper.setMaxVelocity(command.payload * MM_TO_STEP);
         response = "Velocity set to: " + String(command.payload, 2) + " mm/s";
+      }
+      else {
+        response = "Velocity is too low";
       }
       break;
     }

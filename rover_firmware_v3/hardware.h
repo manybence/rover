@@ -215,7 +215,7 @@ void carriage_to_pos(float xpos) {
   if (zeroed){
     if ((MIN_DIST_MM <= xpos) && (xpos <= MAX_DIST_MM)) {
       stepper.moveToAngle(xpos * MM_TO_ANGLE);
-      response = "Moving carriage to pos: " + String(xpos, 2);
+      response = "Moving carriage to pos: " + String(xpos, 2) + " mm";
     }
     else response = "Target pos is out of bounds.";
   }

@@ -24,6 +24,9 @@ int main(int argc, char* argv[]) {
     if (compareStrings(MODE,"DOPPLER")) {
         return processDopplerMode();
     } else
+    if (compareStrings(MODE,"M-MODE")) {
+        return processMMode();
+    } else
     if (compareStrings(MODE,"A-MODE")) {
         return processAMode();
     } else

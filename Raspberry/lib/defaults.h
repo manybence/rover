@@ -11,6 +11,7 @@
 // Default values
 const std::string XPOSMIN_DEF            =            "0.0";
 const std::string XPOSMAX_DEF            =           "51.0";
+const std::string XSPEED_DEF             =            "8.0";
 const std::string ZPOSMIN_DEF            =            "0.0";
 const std::string ZPOSMAX_DEF            =            "4.0";
 const std::string A_MODE_OFFSETMIN_DEF   =              "0";
@@ -39,6 +40,7 @@ const std::string COMMENT_DEF	         =    "No comments";
 
 std::string XPOSMIN                      = XPOSMIN_DEF;
 std::string XPOSMAX                      = XPOSMAX_DEF;
+std::string XSPEED                       = XSPEED_DEF;
 std::string ZPOSMIN                      = ZPOSMIN_DEF;
 std::string ZPOSMAX                      = ZPOSMAX_DEF;
 
@@ -84,8 +86,10 @@ int angle       =    45;
 int manualgain  =   400;
 float xposmin   =   0.0; //mm
 float xposmax   = 520.0; //1/10 mm
+float xspeed     = 8.0;   // 8 mm/s
 float xstep     =   1.0; //mm
 int filsel = 0;
+int scanning_time = 5000000;   // M-mode scanning (us)
 unsigned char txpat = TXPAT2;
 int gainrate    = TISSUE10M;
 const int ARRAY_SIZE = 7168;
@@ -96,6 +100,9 @@ int h;
 #define STGHIGH   32 * 4
 #define UNTILHILO     15
 
+//A-MODE 90 deg., DMax=63.7 mm, fsam = 60 MHz, BufferLength = 4004
+#define A_MODE_BUFLEN 4004
+#define A_MODE_READOUT_OFFSET 960
 
 //Test offset (for phantom - probe near target. Note Offset 0 is resulting in a wrong capture)
 int STRATEG[STGHIGH] = {   0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,

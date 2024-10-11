@@ -72,7 +72,8 @@ Command read_cmd(){
 
 // Send response to master
 void send_response(){
-  Serial.println(response);
+  if (response != "")
+    Serial.println(response);
 }
 
 

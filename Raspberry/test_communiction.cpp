@@ -8,8 +8,8 @@
 
 int main(int argc, char* argv[]) {
     
-    float motorspeed = 15;   // [mm/s]
-    float motortarget = 65; // [52.5 mm]
+    float motorspeed = 13.9;   // [mm/s]
+    float motortarget = 62.4; // [mm]
     float expectedtime_us = (motortarget * 1000000) / motorspeed;
     
     InitMotorCommunication();
@@ -19,7 +19,6 @@ int main(int argc, char* argv[]) {
     InitMotorPosition();
     MotorSpeed(motorspeed);
     MoveMotorToPosition(motortarget);
-    
     usleep(expectedtime_us);
     GetLog();
 
