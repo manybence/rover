@@ -5,8 +5,6 @@
 #include "lib/scanning.h"
 
 
-
-
 int main(int argc, char* argv[]) {
     
     // Read, process and save incoming parameters

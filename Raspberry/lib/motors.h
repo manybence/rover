@@ -72,25 +72,24 @@ void decodeLog(const std::string& encodedLog) {
     
     std::cout << "Decoding log\n" << std::endl;
     
-    int X0, X1, T;
-    int startIndex, commaIndex, endIndex;
+    int X0, X1;
     std::string deltaEncoded;
-    int deltaTime;
     std::string encodedPair;
 
     // Initialize variables
-    deltaTime = 0;
-    T = 0;
+    int deltaTime = 0;
+    int T = 0;
 
     // Parse the header [X0,X1]
-    startIndex = encodedLog.find('[') + 1;
-    commaIndex = encodedLog.find(',', startIndex);
-    endIndex = encodedLog.find(']', commaIndex);
+    int startIndex = encodedLog.find('[') + 1;
+    int commaIndex = encodedLog.find(',', startIndex);
+    int endIndex = encodedLog.find(']', commaIndex);
 
-    // Try to find the characters
+    // Search for log variables
     try {
         X0 = std::stoi(encodedLog.substr(startIndex, commaIndex - startIndex));
         X1 = std::stoi(encodedLog.substr(commaIndex + 1, endIndex - commaIndex - 1));
+        deltaEncoded = encodedLog.substr(endIndex + 1, encodedLog.find('#') - endIndex - 1);
     } catch (const std::invalid_argument& e) {
         std::cerr << "Error: Invalid number format in the log header." << std::endl;
         return;
@@ -98,15 +97,11 @@ void decodeLog(const std::string& encodedLog) {
         std::cerr << "Error: Number out of range in the log header." << std::endl;
         return;
     }
+    std::cout << "Encoded delta time: " << deltaEncoded << std::endl;
 
 
-    // Process the encoded delta times
-    deltaEncoded = encodedLog.substr(endIndex + 1, encodedLog.find('#') - endIndex - 1);
-
-    positionSeries.push_back(X0);
-    timeSeries.push_back(0);
-    
 	// Populate positionSeries from X0 to X1
+    positionSeries.push_back(X0);
     if (X0 <= X1) {
         for (int pos = X0; pos <= X1; ++pos) {
             positionSeries.push_back(pos);
@@ -117,21 +112,23 @@ void decodeLog(const std::string& encodedLog) {
         }
     }
 
+    // Populate timeSeries
+    timeSeries.push_back(0);
     for (size_t i = 0; i < deltaEncoded.length(); i += 2) {
         encodedPair = deltaEncoded.substr(i, 2);
         deltaTime = Base64::b64ConvertString(encodedPair);
-        if (deltaTime > 4096) deltaTime = 4096; // Just to ensure, if needed
+        if (deltaTime > 4096) deltaTime = 4096; // Safety threshold
+        std::cout << "Delta time: " << deltaTime << std::endl;
 
-        // Step 3: Reconstruct the full time series
+        // Reconstruct the full time series
         T += deltaTime;
         timeSeries.push_back(T);
+        std::cout << "Time: " << T << std::endl;
     }
     
     std::cout << "Starting pos: " << X0 << std::endl;
     std::cout << "Ending pos: " << X1 << std::endl;
     std::cout << "Time elapsed: " << T << std::endl;
-
-
 } 
 
 void GetLog() {

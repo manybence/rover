@@ -17,12 +17,13 @@ bool targetReached = true;
 LogEntry logBuffer[BUFFER_SIZE];
 
 void logXpos(int xpos) {
-  logBuffer[logIndex].xpos =  xpos;
-  logBuffer[logIndex].time = ((HAL_GetTick() - m) + 50) / 100;
-  logIndex = (logIndex + 1) % BUFFER_SIZE;
-  if (logIndex == 0) {
+  if (logIndex >= BUFFER_SIZE) {
     bufferFull = true;
-  }
+    return;
+  }  
+  logBuffer[logIndex].xpos =  xpos;
+  logBuffer[logIndex].time = stopWatchGet()/84000;
+  logIndex += 1;
 }
 
 void update_log() {
@@ -60,6 +61,7 @@ void readLogCondensed() { // condensed format
     // Attach end of line symbol
     response += "#\n";
   }
+  else response = "[0,0]0#\n";
 }
 
 void execute_command(Command command) { 

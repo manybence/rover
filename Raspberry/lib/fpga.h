@@ -84,4 +84,14 @@ void fpga_scan() {
     }
 }
 
+int read_fpga_line(int buf_adr) {
+    char txBuf[ARRAY_SIZE];
+    char rxBuf[ARRAY_SIZE];
+    
+    txBuf[0] = (buf_adr >> 8) & 0xff;
+    txBuf[1] = buf_adr & 0xff;
+    spiXfer(h, txBuf, rxBuf, 2);
+    return ((rxBuf[1] << 8) | (rxBuf[0] & 0xfc));
+}
+
 #endif

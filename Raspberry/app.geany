@@ -28,16 +28,13 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=8
-FILE_NAME_0=242;C++;0;EUTF-8;0;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Fmain.cpp;0;4
-FILE_NAME_1=3437;C++;0;EUTF-8;1;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Fscanning.h;0;4
-FILE_NAME_2=3818;C++;0;EUTF-8;0;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Fmotors.h;0;4
-FILE_NAME_3=6570;C++;0;EUTF-8;0;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Fserial_comm.h;0;4
-FILE_NAME_4=539;C++;0;EUTF-8;0;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Ftest_communiction.cpp;0;4
-FILE_NAME_5=4226;C++;0;EUTF-8;0;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Fdefaults.h;0;4
-FILE_NAME_6=1843;C++;0;EUTF-8;1;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Ffile_handler.h;0;4
-FILE_NAME_7=1678;C++;0;EUTF-8;2;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Frelay.h;0;4
-FILE_NAME_8=0;None;0;EUTF-8;1;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Fdata%2Flog0008.csv;0;4
+current_page=5
+FILE_NAME_0=240;C++;0;EUTF-8;0;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Fmain.cpp;0;4
+FILE_NAME_1=7081;C++;0;EUTF-8;1;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Fscanning.h;0;4
+FILE_NAME_2=531;C++;0;EUTF-8;0;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Fmotors.h;0;4
+FILE_NAME_3=5882;C++;0;EUTF-8;1;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Ffile_handler.h;0;4
+FILE_NAME_4=746;C++;0;EUTF-8;0;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Ffpga.h;0;4
+FILE_NAME_5=4144;C++;0;EUTF-8;0;1;0;%2Fhome%2Frapid%2Fprojects%2Fapp%2Flib%2Fdefaults.h;0;4
 
 [VTE]
 last_dir=/home/rapid

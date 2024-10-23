@@ -78,7 +78,7 @@ void InitHW() {
     TestPorts(PORT_X1, PORT_X4);
     usleep(ONESEC);
 
-    if (compareStrings(MODE, "A-MODE")) {port = A_MODE_PORT;};
+    if (compareStrings(MODE, "A-MODE") || compareStrings(MODE,"M-MODE")) {port = A_MODE_PORT;};
     if (compareStrings(MODE,"DOPPLER")) {port = DOPPLER_PORT;};
 
     ActivatePort(lookupString(port, translationTable));

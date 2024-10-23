@@ -1,8 +1,9 @@
 from nicegui import app, ui
 import os
-from fastapi.responses import FileResponse
+import io
 from lib_gui import process_handlers as ph
 from lib_gui import components
+import sys
 
 
 if not os.path.exists(ph.FILES_DIRECTORY):
@@ -30,8 +31,19 @@ def update_values():
     set_status("Scanning")
     ph.run_cpp_program(current_values)
     print("Scanning finished")
-    set_status("Scanning finished")        
+    set_status("Scanning finished")
+    
+class OutputRedirector(io.StringIO):
+    def __init__(self, ui_element):
+        super().__init__()
+        self.ui_element = ui_element
         
+    def write(self, message):
+        self.ui_element.text += message
+        self.ui_element.update()
+        
+    def flush(self):
+        pass
 
 # Ensure stored values include all keys from defaults
 defaults = ph.read_default_values()
@@ -47,6 +59,10 @@ components.create_header()
     
 # Status label
 status_label = components.create_status_label()
+
+# Log output
+#log_area = ui.label("Log output")
+#sys.stdout = OutputRedirector(log_area)
 
 # Scanning
 with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
@@ -87,6 +103,12 @@ with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
                 A_MODE_FILTERTYPE_input = ui.select(['BPF', 'HPF'], label='FILTERTYPE', value=current_values['A_MODE_FILTERTYPE']).style('width: 40%;')
                 A_MODE_SCANLINES_input = ui.number('SCANLINES', value=current_values['A_MODE_SCANLINES'], min=1, max=1000).style('width: 40%;')
     
+    
+        # M-mode settings
+        with ui.expansion('M-MODE', icon='settings').classes('w-full').style('font-weight: bold;'):
+            with ui.row():
+                M_MODE_SCANTIME_input = ui.number('SCAN TIME (us)', value=current_values['M_MODE_SCANTIME']).style('width: 100%;')
+    
         # Doppler settings
         with ui.expansion('DOPPLER', icon='settings').classes('w-full').style('font-weight: bold;'):
             with ui.row():
@@ -101,26 +123,7 @@ with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
                 DOPPLER_SCANLINES_input = ui.number('SCANLINES', value=current_values['DOPPLER_SCANLINES'], min=1, max=1000).style('width: 40%;')
     
 # Display available files
-with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
-    with ui.expansion('FILES', icon='download').classes('w-full').style('font-weight: bold;'):
-        ui.label('File Downloader')
-        ui.separator()
-        # Get a list of files in the directory
-        files = os.listdir(ph.FILES_DIRECTORY)
-
-        # Display the files with download links
-        for file in files:
-            file_path = os.path.join(ph.FILES_DIRECTORY, file)
-            if os.path.isfile(file_path):
-                ui.link(file, f'/download/{file}')
-
-            @ui.page('/download/{file_name}')
-            async def download(file_name: str):
-                file_path = os.path.join(ph.FILES_DIRECTORY, file_name)
-                if os.path.isfile(file_path):
-                    return FileResponse(file_path, filename=file_name)
-                else:
-                    return ui.label('File not found'), 404
+components.available_files()
     
 # Display latest scan image
 components.create_display()

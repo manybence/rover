@@ -20,6 +20,7 @@ const std::string A_MODE_AUTOGAIN_DEF    =          " true";
 const std::string A_MODE_MANUALGAIN_DEF  =           " 700";
 const std::string A_MODE_GAINRATE_DEF    =            "105"; //105 For 10 MHz probe  //90 for 5 MHz probe
 const std::string A_MODE_FILTERTYPE_DEF  =            "BPF";
+const std::string M_MODE_SCANTIME_DEF    =        "3000000";    // 3000000 us = 3 s
 const std::string DOPPLER_OFFSETMIN_DEF  =              "5";
 const std::string DOPPLER_OFFSETMAX_DEF  =             "50";
 const std::string DOPPLER_AUTOGAIN_DEF   =          "false";
@@ -50,6 +51,8 @@ std::string A_MODE_AUTOGAIN              = A_MODE_AUTOGAIN_DEF;
 std::string A_MODE_MANUALGAIN            = A_MODE_MANUALGAIN_DEF;
 std::string A_MODE_GAINRATE              = A_MODE_GAINRATE_DEF;
 std::string A_MODE_FILTERTYPE            = A_MODE_FILTERTYPE_DEF;
+
+std::string M_MODE_SCANTIME              = M_MODE_SCANTIME_DEF;
 
 std::string DOPPLER_OFFSETMIN            = DOPPLER_OFFSETMIN_DEF;
 std::string DOPPLER_OFFSETMAX            = DOPPLER_OFFSETMAX_DEF;
@@ -89,7 +92,7 @@ float xposmax   = 520.0; //1/10 mm
 float xspeed     = 8.0;   // 8 mm/s
 float xstep     =   1.0; //mm
 int filsel = 0;
-int scanning_time = 5000000;   // M-mode scanning (us)
+int scanning_time = 2000000;   // M-mode scanning (us)
 unsigned char txpat = TXPAT2;
 int gainrate    = TISSUE10M;
 const int ARRAY_SIZE = 7168;

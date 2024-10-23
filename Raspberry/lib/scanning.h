@@ -5,7 +5,6 @@
 #include "serial_comm.h"
 #include "fpga.h"
 #include "signal_processing.h"
-#include "bmp_gen.h"
 #include "relay.h"
 #include "file_handler.h"
 
@@ -38,7 +37,6 @@ volatile bool stopFlag = false;
 
 const int ZRANGE =      672; // 16 bit samples x 7168 maps to 67.2 mm at 100 um resolution
 const int XRANGE =  38 * 10; // each pixel represent 100 um resolution (current small restricted movement of scanhead)
-RGB_data BModebuffer[ZRANGE][XRANGE];
 
 
 class DACDeltaCalculator {
@@ -76,13 +74,11 @@ void signalHandler(int signum) {
 
 int processDopplerMode() {
     float xpos = 0.0;
-    int idx, i, x, reps;
+    int idx, i, reps;
     int longest_run;
     int app;
     int newdacval;
     int _dacval, _offset, _hiloval;
-    char txBuf[ARRAY_SIZE];
-    char rxBuf[ARRAY_SIZE];
     DACDeltaCalculator dacDelta;
     bool autogain;
 
@@ -132,17 +128,11 @@ int processDopplerMode() {
                 end_pulse = DOPPLER_END_PULSE;
 
                 // empty dummy spi value
-                txBuf[0] = (start_pulse >> 8) & 0xff;
-                txBuf[1] = start_pulse & 0xff;
-                spiXfer(h, txBuf, rxBuf, 2);
-
+                read_fpga_line(start_pulse);
+                
                 //Reading the captured data from the FPGA
                 for (i = start_pulse; i <= end_pulse; i++) {
-                    txBuf[0] = (i >> 8) & 0xff;
-                    txBuf[1] = i & 0xff;
-                    spiXfer(h, txBuf, rxBuf, 2);
-                    x = ((rxBuf[1] << 8) | (rxBuf[0] & 0xfc));
-                    raw_input_data[i] = x;
+                    raw_input_data[i] = read_fpga_line(i);
                 };
 
                 // Assume doppler mode in this section
@@ -158,7 +148,6 @@ int processDopplerMode() {
                     if (newdacval > 1023) newdacval = 1023;
                     if (newdacval <    0) newdacval =    0;
                     _dacval = newdacval;
-                   // if (_dacval == 0) {_hiloval = 1; _dacval = 1023;}                   //reached max gain then try to get more gain if possible
                 }
               }
             }
@@ -169,24 +158,21 @@ int processDopplerMode() {
                 auto now = std::chrono::high_resolution_clock::now();
                 auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count() - then_us;
 
-                // empty dummy value
-                txBuf[0] = (0 >> 8) & 0xff;
-                txBuf[1] = 0 & 0xff;
-                spiXfer(h, txBuf, rxBuf, 2);
+                // Empty dummy value
+                read_fpga_line(0);
+                
+                // Read data lines
                 for (i = 0; i < ARRAY_SIZE; i++) {
-                    txBuf[0] = (i >> 8) & 0xff;
-                    txBuf[1] = i & 0xff;
-                    spiXfer(h, txBuf, rxBuf, 2);
-                    x = ((rxBuf[1] << 8) | (rxBuf[0] & 0xfc));
-                    raw_input_data[i] = x;
+                    raw_input_data[i] = read_fpga_line(i);
                 };
+                
                 // Buffer the data in RAM
                 dataBuffer.emplace_back(xpos, STRATEG[idx], microseconds, _dacval, _offset, raw_input_data);
         };
     };
     
 	// Write all buffered data to CSV
-   if (SAVE_AS_CSV) save_data_standing(dataBuffer);
+   if (SAVE_AS_CSV) save_data(dataBuffer, false);
    
    // Release hardware
    release_HW();
@@ -195,24 +181,17 @@ int processDopplerMode() {
 }
 
 int processAMode() {
+	
+	std::cerr << "Debug: Starting process A-Mode function\n";
+	
     float xpos = 0.0;
-    int i, x, buf_adr;
+    int i;
     int expectedtime_us;
     int _dacval, _offset, _hiloval;
-    int motortarget;
-    char txBuf[ARRAY_SIZE];
-    char rxBuf[ARRAY_SIZE];
     DACDeltaCalculator dacDelta;
-    memset(BModebuffer, 0, sizeof(BModebuffer));
 
     //A_MODE_BUFLEN is a the 4004 samples deep buffer - enough to hold full depth A_MODE
     std::vector<int16_t> raw_input_data_A(A_MODE_BUFLEN);
-    std::vector<double_t> raw_input_data_d_A(A_MODE_BUFLEN);
-    std::vector<int32_t> filtereddata_A(A_MODE_BUFLEN);
-    std::vector<double> hilbertindata = {};
-    std::cerr << "Debug: Starting processAMode function\n";
-
-    // Buffer to store raw input data
     DataBufferType dataBuffer;
     std::vector<std::vector<double>> dataarray;
 
@@ -221,51 +200,42 @@ int processAMode() {
     InitHW();
 
 	// Start scanning motion
-	std::cout << "Start Scanning" << std::endl;
+	std::cout << "Moving to target position" << std::endl;
 	tcflush(fd, TCIOFLUSH); // Discard both input and output data
-    motortarget = xposmax; // [mm]
     MotorSpeed(xspeed);//mm pr sec  ..
-    MoveMotorToPosition(motortarget); //test - ok full range movement
-    expectedtime_us = GuardTime + (motortarget * 1000000) / xspeed;
+    MoveMotorToPosition(xposmax); //test - ok full range movement
+    expectedtime_us = GuardTime + (xposmax * 1000000) / xspeed;
 
 	// Configure FPGA
     _dacval = manualgain;
     _offset = 0;//15; //Somehow the first bit is overwhelmed by tx ringing
     _hiloval = 0;
-    auto then = std::chrono::high_resolution_clock::now();
-    auto then_us = std::chrono::duration_cast<std::chrono::microseconds>(then.time_since_epoch()).count();
     
     // Start FPGA scanning
+    std::cout << "Start Scanning" << std::endl;
     resetFPGA();
     fpga(txpat, _dacval, _hiloval, _offset);
+    auto then = std::chrono::high_resolution_clock::now();
+    auto then_us = std::chrono::duration_cast<std::chrono::microseconds>(then.time_since_epoch()).count();
     while (!stopFlag) {
         dataarray.clear();
             fpga_scan();
             auto now = std::chrono::high_resolution_clock::now();
             auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count() - then_us;
             if (expectedtime_us < microseconds){
-                stopFlag = true; // To end and display time results (test)
+                stopFlag = true;
             }
 
             // Read first sample twice (dummy stuff in spi buffer need to be discarded so a read from any addres would do)
-            buf_adr = A_MODE_READOUT_OFFSET;
-            txBuf[0] = (buf_adr >> 8) & 0xff;
-            txBuf[1] = buf_adr & 0xff;
-            spiXfer(h, txBuf, rxBuf, 2);
+            read_fpga_line(A_MODE_READOUT_OFFSET);
 
-            // Read captured line
+            // Read captured lines
             for (i = 0; i < A_MODE_BUFLEN; i++) {
-                buf_adr = i + A_MODE_READOUT_OFFSET;
-                txBuf[0] = (buf_adr >> 8) & 0xff;
-                txBuf[1] = buf_adr & 0xff;
-                spiXfer(h, txBuf, rxBuf, 2);
-                x = ((rxBuf[1] << 8) | (rxBuf[0] & 0xfc));
-                raw_input_data_A[i] = x;
+                raw_input_data_A[i] = read_fpga_line(i + A_MODE_READOUT_OFFSET);
             };
+            
             // Buffer the data in RAM
             dataBuffer.emplace_back(xpos, _hiloval, microseconds, _dacval, _offset, raw_input_data_A);
-       // };
-
     }
 
 	// Release hardware
@@ -276,29 +246,24 @@ int processAMode() {
     GetLog();
 
     // Write all buffered data to CSV
-    if (SAVE_AS_CSV) save_data_moving(dataBuffer);
+    if (SAVE_AS_CSV) save_data(dataBuffer, true);
     
     return 0;
 }
 
 int processMMode() {
 	
+	std::cerr << "Debug: Starting process M-Mode function\n";
+	
 	float xpos = 0.0;
-    int i, x, buf_adr;
+    int i;
     int expectedtime_us;
     int _dacval, _offset, _hiloval;
-    int motortarget;
-    char txBuf[ARRAY_SIZE];
-    char rxBuf[ARRAY_SIZE];
     DACDeltaCalculator dacDelta;
-    memset(BModebuffer, 0, sizeof(BModebuffer));
 
     //A_MODE_BUFLEN is a the 4004 samples deep buffer - enough to hold full depth A_MODE
     std::vector<int16_t> raw_input_data_A(A_MODE_BUFLEN);
-    std::vector<double_t> raw_input_data_d_A(A_MODE_BUFLEN);
-    std::vector<int32_t> filtereddata_A(A_MODE_BUFLEN);
-    std::vector<double> hilbertindata = {};
-    std::cerr << "Debug: Starting processMMode function\n";
+   
 
     // Buffer to store raw input data
     DataBufferType dataBuffer;
@@ -311,23 +276,22 @@ int processMMode() {
 	// Move to scanning position
 	std::cout << "Moving to target position" << std::endl;
 	tcflush(fd, TCIOFLUSH); // Discard both input and output data
-    motortarget = xposmax; // [mm]
     MotorSpeed(xspeed);//mm pr sec  ..
-    MoveMotorToPosition(motortarget); //test - ok full range movement
-    expectedtime_us = GuardTime + (motortarget * 1000000) / xspeed;
+    MoveMotorToPosition(xposmax); //test - ok full range movement
+    expectedtime_us = GuardTime + (xposmax * 1000000) / xspeed;
     usleep(expectedtime_us);
 
 	// Configure FPGA
     _dacval = manualgain;
     _offset = 0;//15; //Somehow the first bit is overwhelmed by tx ringing
     _hiloval = 0;
-    auto then = std::chrono::high_resolution_clock::now();
-    auto then_us = std::chrono::duration_cast<std::chrono::microseconds>(then.time_since_epoch()).count();
     
     // Start FPGA scanning
     std::cout << "Start Scanning" << std::endl;
     resetFPGA();
     fpga(txpat, _dacval, _hiloval, _offset);
+    auto then = std::chrono::high_resolution_clock::now();
+    auto then_us = std::chrono::duration_cast<std::chrono::microseconds>(then.time_since_epoch()).count();
     while (!stopFlag) {
         dataarray.clear();
             fpga_scan();
@@ -338,24 +302,15 @@ int processMMode() {
             }
 
             // Read first sample twice (dummy stuff in spi buffer need to be discarded so a read from any addres would do)
-            buf_adr = A_MODE_READOUT_OFFSET;
-            txBuf[0] = (buf_adr >> 8) & 0xff;
-            txBuf[1] = buf_adr & 0xff;
-            spiXfer(h, txBuf, rxBuf, 2);
+            read_fpga_line(A_MODE_READOUT_OFFSET);
 
-            // Read captured line
+            // Read captured lines
             for (i = 0; i < A_MODE_BUFLEN; i++) {
-                buf_adr = i + A_MODE_READOUT_OFFSET;
-                txBuf[0] = (buf_adr >> 8) & 0xff;
-                txBuf[1] = buf_adr & 0xff;
-                spiXfer(h, txBuf, rxBuf, 2);
-                x = ((rxBuf[1] << 8) | (rxBuf[0] & 0xfc));
-                raw_input_data_A[i] = x;
+                raw_input_data_A[i] = read_fpga_line(i + A_MODE_READOUT_OFFSET);
             };
+            
             // Buffer the data in RAM
             dataBuffer.emplace_back(xpos, _hiloval, microseconds, _dacval, _offset, raw_input_data_A);
-       // };
-
     }
 
 	// Release hardware
@@ -366,7 +321,7 @@ int processMMode() {
     GetLog();
 
     // Write all buffered data to CSV
-    if (SAVE_AS_CSV) save_data_standing(dataBuffer);
+    if (SAVE_AS_CSV) save_data(dataBuffer, false);
     return 0;
 
 }
