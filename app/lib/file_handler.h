@@ -127,11 +127,11 @@ void GetParameters(int argc, char* argv[]) {
 
 int saveParameters(int argc, char* argv[]){
 	
-	// Read incoming parameters
+    // Read incoming parameters
     GetParameters(argc, argv);
 
     // Ensure the data directory exists
-    std::string directory = "data";
+    std::string directory = "app/data";
     if (!std::filesystem::exists(directory)) {
         std::cerr << "Debug: Creating directory " << directory << "\n";
         std::filesystem::create_directory(directory);
@@ -173,53 +173,53 @@ int saveParameters(int argc, char* argv[]){
 int save_data(const DataBufferType& dataBuffer, bool moving=false) {
    
     // Open CSV file
-	std::ofstream csvFile(datfilename);
-	if (!csvFile.is_open()) {
-		std::cerr << "Failed to open the CSV file for writing." << std::endl;
-		return 1;
-	}
-	
-	// Write header
-	csvFile << "XPOS,STRATEG,TIME,DACVAL,OFFSET";
-	
-	// Set buffer size
-	size_t BUFFER_SIZE = A_MODE_BUFLEN;
-	if (IsDopplerMode) BUFFER_SIZE = ARRAY_SIZE;
-		
-	// Write header
-	for (size_t i = 0; i < BUFFER_SIZE; ++i) {
-		csvFile << ",D[" << i << "]";
-	}
-	csvFile << "\n";
-	
-	// Log data
-	float ip0 = -10000.0;
-	float pos = xposmax;
-	for (const auto& entry : dataBuffer) {
-		
-		// Log variables
-		if (moving) {	
-			float tm = std::get<2>(entry) / 1000.0;
-			float ip = interpolatePosition(tm);
-			//if (abs(ip0-ip) < 0.01) break;
-			ip0 = ip;
-			pos = ip;
-		}
-		csvFile << pos << "," << std::get<1>(entry) << "," << std::get<2>(entry) << "," << std::get<3>(entry) << "," << std::get<4>(entry);
-		
-		// Log data points
-		const auto& rawData = std::get<5>(entry);
-		for (size_t i = 0; i < BUFFER_SIZE; ++i) {
-			csvFile << "," << rawData[i];
-		}
-		csvFile << "\n";
-	}
+    std::ofstream csvFile(datfilename);
+    if (!csvFile.is_open()) {
+	    std::cerr << "Failed to open the CSV file for writing." << std::endl;
+	    return 1;
+    }
+    
+    // Write header
+    csvFile << "XPOS,STRATEG,TIME,DACVAL,OFFSET";
+    
+    // Set buffer size
+    size_t BUFFER_SIZE = A_MODE_BUFLEN;
+    if (IsDopplerMode) BUFFER_SIZE = ARRAY_SIZE;
+	    
+    // Write header
+    for (size_t i = 0; i < BUFFER_SIZE; ++i) {
+	    csvFile << ",D[" << i << "]";
+    }
+    csvFile << "\n";
+    
+    // Log data
+    float ip0 = -10000.0;
+    float pos = xposmax;
+    for (const auto& entry : dataBuffer) {
+	    
+	    // Log variables
+	    if (moving) {	
+		    float tm = std::get<2>(entry) / 1000.0;
+		    float ip = interpolatePosition(tm);
+		    //if (abs(ip0-ip) < 0.01) break;
+		    ip0 = ip;
+		    pos = ip;
+	    }
+	    csvFile << pos << "," << std::get<1>(entry) << "," << std::get<2>(entry) << "," << std::get<3>(entry) << "," << std::get<4>(entry);
+	    
+	    // Log data points
+	    const auto& rawData = std::get<5>(entry);
+	    for (size_t i = 0; i < BUFFER_SIZE; ++i) {
+		    csvFile << "," << rawData[i];
+	    }
+	    csvFile << "\n";
+    }
 
-	// Close CSV file
-	csvFile.close();
-	std::cout << "Data saved to: " << datfilename << std::endl;
+    // Close CSV file
+    csvFile.close();
+    std::cout << "Data saved to: " << datfilename << std::endl;
 
-	return 0;
+    return 0;
 }
 
 

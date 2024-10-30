@@ -15,9 +15,10 @@ import psutil
 
 
 # Define the directory containing the files
-FILES_DIRECTORY = '/home/rapid/projects/app/data/'
-executable_path = '/home/rapid/projects/app/main'
-default_path = '/home/rapid/projects/app/lib_gui/default_parameters.json'
+FILES_DIRECTORY = '/home/rapid/projects/rover/app/data/'
+executable_path = '/home/rapid/projects/rover/app/main'
+default_path = '/home/rapid/projects/rover/app/lib_gui/default_parameters.json'
+match_template_path = "/home/rapid/projects/rover/app/lib_gui/match_filter/template_5_MHz.csv"
 
 def read_default_values():
     
@@ -49,37 +50,40 @@ def find_latest_data(directory):
     return latest_file
         
 def process_image():
-    data_range = 4003
-    file_path = find_latest_data(FILES_DIRECTORY)
-    print("Processing image: ", file_path)
-    df = pd.read_csv(file_path)
-    data_columns = [f'D[{i}]' for i in range(data_range)]
-    data = df[data_columns].values
-    envelopes = np.abs(signal.hilbert(data, axis=1))
-    log_envelopes = np.log1p(envelopes)  # Use log1p to avoid log(0)
-    normalized_envelopes = 255 * (log_envelopes - np.min(log_envelopes)) / (np.max(log_envelopes) - np.min(log_envelopes))
-    bitmap = normalized_envelopes.astype(np.uint8)
-    plt.imshow(bitmap.T, cmap='gray', aspect='auto')
-    plt.axis('off') 
-    plt.savefig(file_path.replace('.csv', '.png').replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
-    plt.close()
+    try:
+        data_range = 4003
+        file_path = find_latest_data(FILES_DIRECTORY)
+        print("Processing image: ", file_path)
+        df = pd.read_csv(file_path)
+        data_columns = [f'D[{i}]' for i in range(data_range)]
+        data = df[data_columns].values
+        envelopes = np.abs(signal.hilbert(data, axis=1))
+        log_envelopes = np.log1p(envelopes)  # Use log1p to avoid log(0)
+        normalized_envelopes = 255 * (log_envelopes - np.min(log_envelopes)) / (np.max(log_envelopes) - np.min(log_envelopes))
+        bitmap = normalized_envelopes.astype(np.uint8)
+        plt.imshow(bitmap.T, cmap='gray', aspect='auto')
+        plt.axis('off') 
+        plt.savefig(file_path.replace('.csv', '.png').replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
+        plt.close()
+    except Exception as e:
+        print(f"Error while processing image: {e}")
     
 def process_m_mode_image():
 
     # Find latest image
-    file_path = find_latest_data(FILES_DIRECTORY)
-    print("Processing M-mode image: ", file_path)
+    try:
+        file_path = find_latest_data(FILES_DIRECTORY)
+        print("Processing M-mode image: ", file_path)
+               
+        # Load matched filter template
+        template = fh.load_match_template(match_template_path)
 
-    # Matched filter template path
-    path_template = "lib_gui/match_filter/template_5_MHz.csv"
-            
-    # Load matched filter template
-    template = fh.load_match_template(path_template)
-
-    # Perform imaging
-    depth = md.m_mode_imaging(file_path, template)
-    plt.savefig(file_path.replace('.csv', '.png').replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
-    plt.close()
+        # Perform imaging
+        depth = md.m_mode_imaging(file_path, template)
+        plt.savefig(file_path.replace('.csv', '.png').replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
+        plt.close()
+    except Exception as e:
+        print(f"Error while processing image: {e}")
     
 def run_cpp_program(current_values):
     # Convert boolean AUTOGAIN to string 'true' or 'false'

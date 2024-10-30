@@ -12,9 +12,14 @@ class Display:
         image_path = ph.find_latest_bitmap(ph.FILES_DIRECTORY)
 
         with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
-            self.label = ui.label('LATEST SCAN: ' + image_path).style('font-weight: bold;')
-            self.image = ui.image(image_path).style('width: 100%;')
-            self.path = image_path
+            if image_path:
+                self.label = ui.label('LATEST SCAN: ' + image_path).style('font-weight: bold;')
+                self.image = ui.image(image_path).style('width: 100%;')
+                self.path = image_path
+            else:
+                self.label = ui.label("No image found").style('font-weight: bold;')
+                self.image = ui.image()
+                self.path = ""
 
     def update_image(self):
         

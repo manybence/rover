@@ -60,7 +60,7 @@ void read_registers(int file) {
 
 int read_BITE() {
 
-    int file, i;
+    int file;
     int error = 0;
     const char *filename = I2C_DEVICE;
     uint8_t init_data[2];

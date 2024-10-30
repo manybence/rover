@@ -1,10 +1,5 @@
 TODO:
-- Robustness of start up and comm prot
 - Windows - Linux problems?
 - Dedicated command compiler?
-- Make robust comm protocol - timeout happens while typing
 - Timer better resolution (maybe hw processor reading directly)
-- comm prot - log file
-- Status display correctly
-- Comments - default value = empty
 

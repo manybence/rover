@@ -9,7 +9,7 @@ import time
 # Close previous session if exists
 ph.release_port(8080)
 
-favicon_path = 'lib_gui/neurescue_logo_heart.png'
+favicon_path = '/home/rapid/projects/rover/app/lib_gui/neurescue_logo_heart.png'
 latest_image_path = ""
 
 if not os.path.exists(ph.FILES_DIRECTORY):
