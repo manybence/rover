@@ -49,6 +49,7 @@ void SendParametersToStream() {
     std::cout << "DOPPLER SCANLINES: "  << DOPPLER_SCANLINES    << std::endl;
     std::cout << "NEEDLEPOS: "          << NEEDLEPOS            << std::endl;
     std::cout << "COMMENT: "            << COMMENT              << std::endl;
+    std::cout << "IS CONFIGURED: "      << IS_CONFIGURED        << std::endl;
 };
 
 void GetParameters(int argc, char* argv[]) {
@@ -85,6 +86,7 @@ void GetParameters(int argc, char* argv[]) {
         DOPPLER_SCANLINES    = std::string(argv[i++]);
         NEEDLEPOS            = std::string(argv[i++]);
         COMMENT              = std::string(argv[i++]);
+        IS_CONFIGURED        = std::string(argv[i++]);
     };
 
     // Lookup strings in the table
@@ -99,7 +101,6 @@ void GetParameters(int argc, char* argv[]) {
         filsel = lookupString(A_MODE_FILTERTYPE, translationTable);
         manualgain = stringToInt(A_MODE_MANUALGAIN);
         gainrate = stringToInt(A_MODE_GAINRATE);
-
     };
 
     if (compareStrings(MODE,"DOPPLER")) {
@@ -123,6 +124,7 @@ void GetParameters(int argc, char* argv[]) {
     zposmax   = stringToFloat(ZPOSMAX);
     needlepos = stringToFloat(NEEDLEPOS);
     scanning_time = stringToFloat(M_MODE_SCANTIME);
+    configured = stringToBool(IS_CONFIGURED);
 };
 
 int saveParameters(int argc, char* argv[]){

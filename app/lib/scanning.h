@@ -89,10 +89,6 @@ int processDopplerMode() {
     std::vector<double> hilbertindata = {};
     std::cerr << "Debug: Starting processDopplerMode function\n";
     
-	// Initialize hardware
-	printf("Initialisation of HW\n");
-    InitHW();
-    
 	// Move to scanning position
 	std::cout << "Moving to target position" << std::endl;
 	tcflush(fd, TCIOFLUSH); // Discard both input and output data
@@ -195,10 +191,6 @@ int processAMode() {
     DataBufferType dataBuffer;
     std::vector<std::vector<double>> dataarray;
 
-	// Initialise hardware
-    printf("Initialisation of HW");
-    InitHW();
-
 	// Start scanning motion
 	std::cout << "Moving to target position" << std::endl;
 	tcflush(fd, TCIOFLUSH); // Discard both input and output data
@@ -268,10 +260,6 @@ int processMMode() {
     // Buffer to store raw input data
     DataBufferType dataBuffer;
     std::vector<std::vector<double>> dataarray;
-
-	// Initialise hardware
-    printf("Initialisation of HW");
-    InitHW();
 
 	// Move to scanning position
 	std::cout << "Moving to target position" << std::endl;

@@ -85,13 +85,13 @@ def process_m_mode_image():
     except Exception as e:
         print(f"Error while processing image: {e}")
     
-def run_cpp_program(current_values):
+def run_cpp_program(current_values, is_configured):
     # Convert boolean AUTOGAIN to string 'true' or 'false'
     A_MODE_autogain_str = 'true' if current_values['A_MODE_AUTOGAIN'] else 'false'
     DOPPLER_autogain_str = 'true' if current_values['DOPPLER_AUTOGAIN'] else 'false'
 
     # Prepare the command with arguments
-    command = ['sudo', executable_path] + [str(value) for value in current_values.values()]
+    command = ['sudo', executable_path] + [str(value) for value in current_values.values()] + [str(is_configured)]
 
     try:
         # Run the command

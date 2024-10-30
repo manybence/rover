@@ -20,9 +20,12 @@ int main(int argc, char* argv[]) {
     
     // Initialize motor
     InitMotorCommunication();
-    InitMotorPosition();
-    
+    if (!configured) {InitMotorPosition();}
 
+    // Initialize hardware
+	printf("Initialisation of HW\n");
+    InitHW(configured);
+    
     // Start scanning process
     if (compareStrings(MODE,"DOPPLER")) {
         return processDopplerMode();

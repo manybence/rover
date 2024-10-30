@@ -36,7 +36,8 @@ const std::string A_MODE_SCANLINES_DEF   =              "1";
 const std::string NEEDLEPOS_DEF          =            "0.0";
 const std::string A_MODE_TXPAT_DEF       = "10 MHz 4 Pulses";
 const std::string DOPPLER_TXPAT_DEF      = "4 MHz 8 Pulses";
-const std::string COMMENT_DEF	         =    "No comments";
+const std::string COMMENT_DEF	           =    "No comments";
+const std::string IS_CONFIGURED_DEF      =              "0";  // 0: not configured  | 1: configured
 
 
 std::string XPOSMIN                      = XPOSMIN_DEF;
@@ -71,6 +72,7 @@ std::string A_MODE_SCANLINES             = A_MODE_SCANLINES_DEF;
 std::string DOPPLER_SCANLINES            = DOPPLER_SCANLINES_DEF;
 std::string NEEDLEPOS                    = NEEDLEPOS_DEF;
 std::string COMMENT                      = COMMENT_DEF;
+std::string IS_CONFIGURED                   = IS_CONFIGURED_DEF;
 
 // The amount the DAC controlling the VGA get dec each adjustment to compensate for tissue attenuation
 #define TISSUE10M 104;
@@ -98,6 +100,7 @@ int gainrate    = TISSUE10M;
 const int ARRAY_SIZE = 7168;
 bool IsDopplerMode = false;
 int h;
+bool configured = false;
 
 // The following tables is for 60 deg doppler angle 10 MHz probe (SensorScan) STRATEG is a strategy for start serching the most likely place of the FA.
 #define STGHIGH   32 * 4

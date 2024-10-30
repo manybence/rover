@@ -34,14 +34,29 @@ class Display:
             self.image.force_reload()
             self.path = new_image_path
 
+class Status:
+    def __init__(self):
+
+        with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
+            self.label = ui.label("STATUS: Standby").style('font-size: 20px; font-weight: bold; color: black; text-align: center; width: 100%;')
+        
+    def set_status(self, new_status):
+
+        self.label.set_text("STATUS: " + new_status)
+
+        if new_status == "Scanning":
+            self.label.style("color:yellow")
+            ui.notify("Scanning started")
+        elif new_status == "Scanning finished":
+            self.label.style("color:green")
+            ui.notify("Scanning finished")
+        elif new_status == "Standby":
+            self.label.style("color:black")
+        
 def create_header():
     with ui.header().style('background-color: #C30010; color: white; text-align: center; padding: 1em;'):
         ui.label('RAPID ULTRASOUND UNIT 3 CONTROL PANEL').style('font-size: 2em; font-weight: bold;')
-        
-def create_status_label():
-    with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
-        return ui.label("STATUS: Standby").style('font-size: 20px; font-weight: bold; color: black; text-align: center; width: 100%;')
-            
+           
 def available_files():
     with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
         with ui.expansion('FILES', icon='download').classes('w-full').style('font-weight: bold;'):
@@ -51,6 +66,7 @@ def available_files():
             files = os.listdir(ph.FILES_DIRECTORY)
 
             # Display the files with download links
+            files.sort()
             for file in files:
                 file_path = os.path.join(ph.FILES_DIRECTORY, file)
                 if os.path.isfile(file_path):

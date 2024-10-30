@@ -58,29 +58,33 @@ void TestPorts(int p1, int p2){
 	ActivatePort(p2);
 }
 
-void InitHW() {
+void InitHW(bool is_configured) {
         
-    printf("Testing relays...\n");
     std::string port;
     initializeGPIO();
     gpioWrite(IO_EN3V3, 1); //turn on 3V3 rail
     gpioWrite(IO_EN5V,  1); //turn on 5V rail
 
-    //Exercise ports (toggle Relay K300)
-    TestPorts(PORT_X3, PORT_X1);
-    usleep(ONESEC);
+    if (!is_configured) {
 
-    //Exercise ports (toggle Relay K301)
-    TestPorts(PORT_X4, PORT_X3);
-    usleep(ONESEC);
+        printf("Testing relays...\n");
+        
+        //Exercise ports (toggle Relay K300)
+        TestPorts(PORT_X3, PORT_X1);
+        usleep(ONESEC);
+
+        //Exercise ports (toggle Relay K301)
+        TestPorts(PORT_X4, PORT_X3);
+        usleep(ONESEC);
+        
+        // Exercise ports
+        TestPorts(PORT_X1, PORT_X4);
+        usleep(ONESEC);
+    }
     
-    // Exercise ports
-    TestPorts(PORT_X1, PORT_X4);
-    usleep(ONESEC);
-
+    // Activate selected port
     if (compareStrings(MODE, "A-MODE") || compareStrings(MODE,"M-MODE")) {port = A_MODE_PORT;};
     if (compareStrings(MODE,"DOPPLER")) {port = DOPPLER_PORT;};
-
     ActivatePort(lookupString(port, translationTable));
 
     usleep(MS1);
