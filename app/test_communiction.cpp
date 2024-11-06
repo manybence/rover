@@ -8,18 +8,13 @@
 
 int main(int argc, char* argv[]) {
     
-    float motorspeed = 13.9;   // [mm/s]
-    float motortarget = 62.4; // [mm]
-    float expectedtime_us = (motortarget * 1000000) / motorspeed;
+    //float motorspeed = 13.9;   // [mm/s]
+    //float motortarget = 62.4; // [mm]
+    //float expectedtime_us = (motortarget * 1000000) / motorspeed;
     
     InitMotorCommunication();
     printf("fd opened: %d\n", fd);
     
-    // Send command
-    InitMotorPosition();
-    MotorSpeed(motorspeed);
-    MoveMotorToPosition(motortarget);
-    usleep(expectedtime_us);
-    GetLog();
-
+    float pos = ReadMotorPosition();
+    printf("Current XPOS: %f\n", pos);
 }

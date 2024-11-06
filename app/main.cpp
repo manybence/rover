@@ -5,6 +5,7 @@
 #include "lib/scanning.h"
 #include "lib/BITE.h"
 
+float depth = 4.0;
 
 int main(int argc, char* argv[]) {
 
@@ -20,6 +21,7 @@ int main(int argc, char* argv[]) {
     
     // Initialize motor
     InitMotorCommunication();
+    configured = IsMotorZeroed();
     if (!configured) {InitMotorPosition();}
 
     // Initialize hardware
@@ -37,7 +39,7 @@ int main(int argc, char* argv[]) {
         return processAMode();
     } else
     if (compareStrings(MODE,"NEEDLE")) {
-        return processNeedleMode();
+        return processNeedleMode(depth);
     } else {
         return -1;
     }

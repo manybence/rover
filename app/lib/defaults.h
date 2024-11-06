@@ -12,15 +12,13 @@
 const std::string XPOSMIN_DEF            =            "0.0";
 const std::string XPOSMAX_DEF            =           "51.0";
 const std::string XSPEED_DEF             =            "8.0";
-const std::string ZPOSMIN_DEF            =            "0.0";
-const std::string ZPOSMAX_DEF            =            "4.0";
 const std::string A_MODE_OFFSETMIN_DEF   =              "0";
 const std::string A_MODE_OFFSETMAX_DEF   =              "2";
 const std::string A_MODE_AUTOGAIN_DEF    =          " true";
 const std::string A_MODE_MANUALGAIN_DEF  =           " 700";
 const std::string A_MODE_GAINRATE_DEF    =            "105"; //105 For 10 MHz probe  //90 for 5 MHz probe
 const std::string A_MODE_FILTERTYPE_DEF  =            "BPF";
-const std::string M_MODE_SCANTIME_DEF    =        "3000000";    // 3000000 us = 3 s
+const std::string M_MODE_SCANTIME_DEF    =           "3000";    // 3000 ms = 3 s
 const std::string DOPPLER_OFFSETMIN_DEF  =              "5";
 const std::string DOPPLER_OFFSETMAX_DEF  =             "50";
 const std::string DOPPLER_AUTOGAIN_DEF   =          "false";
@@ -31,9 +29,7 @@ const std::string A_MODE_PORT_DEF        =             "X1";
 const std::string DOPPLER_PORT_DEF       =             "X3";
 const std::string DOPPLER_ANGLE_DEF      =              "0";
 const std::string MODE_DEF               =         "A-MODE"; //"DOPPLER" | "A-MODE" | "NEEDLE"
-const std::string XSTEP_DEF              =            "1.0";
 const std::string A_MODE_SCANLINES_DEF   =              "1";
-const std::string NEEDLEPOS_DEF          =            "0.0";
 const std::string A_MODE_TXPAT_DEF       = "10 MHz 4 Pulses";
 const std::string DOPPLER_TXPAT_DEF      = "4 MHz 8 Pulses";
 const std::string COMMENT_DEF	           =    "No comments";
@@ -43,8 +39,6 @@ const std::string IS_CONFIGURED_DEF      =              "0";  // 0: not configur
 std::string XPOSMIN                      = XPOSMIN_DEF;
 std::string XPOSMAX                      = XPOSMAX_DEF;
 std::string XSPEED                       = XSPEED_DEF;
-std::string ZPOSMIN                      = ZPOSMIN_DEF;
-std::string ZPOSMAX                      = ZPOSMAX_DEF;
 
 std::string A_MODE_OFFSETMIN             = A_MODE_OFFSETMIN_DEF;
 std::string A_MODE_OFFSETMAX             = A_MODE_OFFSETMAX_DEF;
@@ -67,12 +61,10 @@ std::string A_MODE_TXPAT                 = A_MODE_TXPAT_DEF;
 std::string DOPPLER_TXPAT                = DOPPLER_TXPAT_DEF;
 std::string DOPPLER_ANGLE                = DOPPLER_ANGLE_DEF;
 std::string MODE                         = MODE_DEF;
-std::string XSTEP                        = XSTEP_DEF;
 std::string A_MODE_SCANLINES             = A_MODE_SCANLINES_DEF;
 std::string DOPPLER_SCANLINES            = DOPPLER_SCANLINES_DEF;
-std::string NEEDLEPOS                    = NEEDLEPOS_DEF;
 std::string COMMENT                      = COMMENT_DEF;
-std::string IS_CONFIGURED                   = IS_CONFIGURED_DEF;
+std::string IS_CONFIGURED                = IS_CONFIGURED_DEF;
 
 // The amount the DAC controlling the VGA get dec each adjustment to compensate for tissue attenuation
 #define TISSUE10M 104;
@@ -81,9 +73,6 @@ std::string IS_CONFIGURED                   = IS_CONFIGURED_DEF;
 
 
 // Initialize variables
-float zposmin   =  0.0;
-float zposmax   = 30.0;
-float needlepos =  0.0;
 int lines       =   100;
 int offsetmin   =     5;
 int offsetmax   =    42;
@@ -92,9 +81,8 @@ int manualgain  =   400;
 float xposmin   =   0.0; //mm
 float xposmax   = 520.0; //1/10 mm
 float xspeed     = 8.0;   // 8 mm/s
-float xstep     =   1.0; //mm
 int filsel = 0;
-int scanning_time = 2000000;   // M-mode scanning (us)
+int scanning_time = 3000;   // M-mode scanning (ms)
 unsigned char txpat = TXPAT2;
 int gainrate    = TISSUE10M;
 const int ARRAY_SIZE = 7168;

@@ -14,7 +14,6 @@ import numpy as np
 from scipy import signal
 from scipy.signal import hilbert
 import matplotlib.pyplot as plt
-import cv2
 
 sampling_freq = 60e6
 wave_velocity = 1480

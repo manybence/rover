@@ -113,7 +113,7 @@ void InitHW(bool is_configured) {
 
     spiOpen(0, SPIRATE, 0);
     usleep(MS200);
-    usleep(5000000); //5 secs. Wait for power rail stabilization
+    usleep(3000000); //3 secs. Wait for power rail stabilization
 }
 
 void release_HW() {

@@ -4,6 +4,8 @@
 #include "defaults.h"
 #include "serial_comm.h"
 
+std::string FILES_DIRECTORY = "/home/rapid/projects/rover/app/data/";
+
 using DataBufferType = std::vector<std::tuple<float, int, long long, int, int, std::vector<int16_t>>>;
 
 std::string logfilename, datfilename, picfilename;
@@ -24,8 +26,6 @@ void SendParametersToStream() {
     std::cout << "XPOSMIN: "            << XPOSMIN              << std::endl;
     std::cout << "XPOSMAX: "            << XPOSMAX              << std::endl;
     std::cout << "XSPEED: "             << XSPEED               << std::endl;
-    std::cout << "ZPOSMIN: "            << ZPOSMIN              << std::endl;
-    std::cout << "ZPOSMAX: "            << ZPOSMAX              << std::endl;
     std::cout << "A_MODE_OFFSETMIN: "   << A_MODE_OFFSETMIN     << std::endl;
     std::cout << "A_MODE_OFFSETMAX: "   << A_MODE_OFFSETMAX     << std::endl;
     std::cout << "A_MODE_AUTOGAIN: "    << A_MODE_AUTOGAIN      << std::endl;
@@ -44,10 +44,8 @@ void SendParametersToStream() {
     std::cout << "DOPPLER TXPAT: "      << DOPPLER_TXPAT        << std::endl;
     std::cout << "DOPPLER ANGLE: "      << DOPPLER_ANGLE        << std::endl;
     std::cout << "MODE: "               << MODE                 << std::endl;
-    std::cout << "XSTEP: "              << XSTEP                << std::endl;
     std::cout << "A-MODE SCANLINES: "   << A_MODE_SCANLINES     << std::endl;
     std::cout << "DOPPLER SCANLINES: "  << DOPPLER_SCANLINES    << std::endl;
-    std::cout << "NEEDLEPOS: "          << NEEDLEPOS            << std::endl;
     std::cout << "COMMENT: "            << COMMENT              << std::endl;
     std::cout << "IS CONFIGURED: "      << IS_CONFIGURED        << std::endl;
 };
@@ -57,12 +55,10 @@ void GetParameters(int argc, char* argv[]) {
     int i = 1;
     
     // Override defaults with command-line arguments
-    if (argc > 27) {
+    if (argc > 24) {
         XPOSMIN              = std::string(argv[i++]);
         XPOSMAX              = std::string(argv[i++]);
         XSPEED               = std::string(argv[i++]);
-        ZPOSMIN              = std::string(argv[i++]);
-        ZPOSMAX              = std::string(argv[i++]);
         A_MODE_OFFSETMIN     = std::string(argv[i++]);
         A_MODE_OFFSETMAX     = std::string(argv[i++]);
         A_MODE_AUTOGAIN      = std::string(argv[i++]);
@@ -81,10 +77,8 @@ void GetParameters(int argc, char* argv[]) {
         DOPPLER_TXPAT        = std::string(argv[i++]);
         DOPPLER_ANGLE        = std::string(argv[i++]);
         MODE                 = std::string(argv[i++]);
-        XSTEP                = std::string(argv[i++]);
         A_MODE_SCANLINES     = std::string(argv[i++]);
         DOPPLER_SCANLINES    = std::string(argv[i++]);
-        NEEDLEPOS            = std::string(argv[i++]);
         COMMENT              = std::string(argv[i++]);
         IS_CONFIGURED        = std::string(argv[i++]);
     };
@@ -119,10 +113,6 @@ void GetParameters(int argc, char* argv[]) {
     xposmin   = stringToFloat(XPOSMIN);
     xposmax   = stringToFloat(XPOSMAX);
     xspeed    = stringToFloat(XSPEED);
-    xstep     = stringToFloat(XSTEP);
-    zposmin   = stringToFloat(ZPOSMIN);
-    zposmax   = stringToFloat(ZPOSMAX);
-    needlepos = stringToFloat(NEEDLEPOS);
     scanning_time = stringToFloat(M_MODE_SCANTIME);
     configured = stringToBool(IS_CONFIGURED);
 };
@@ -133,9 +123,9 @@ int saveParameters(int argc, char* argv[]){
     GetParameters(argc, argv);
 
     // Ensure the data directory exists
-    std::string directory = "app/data";
+    std::string directory = FILES_DIRECTORY;
     if (!std::filesystem::exists(directory)) {
-        std::cerr << "Debug: Creating directory " << directory << "\n";
+        std::cout << "Debug: Creating directory " << directory << "\n";
         std::filesystem::create_directory(directory);
     };
 
@@ -153,7 +143,7 @@ int saveParameters(int argc, char* argv[]){
     // Open the file
     std::ofstream outfile(logfilename);
     if (!outfile) {
-        std::cerr << "Error: Could not open file " << logfilename << " for writing\n";
+        std::cout << "Error: Could not open file " << logfilename << " for writing\n";
         return 1;
     };
 
@@ -177,7 +167,7 @@ int save_data(const DataBufferType& dataBuffer, bool moving=false) {
     // Open CSV file
     std::ofstream csvFile(datfilename);
     if (!csvFile.is_open()) {
-	    std::cerr << "Failed to open the CSV file for writing." << std::endl;
+	    std::cout << "Failed to open the CSV file for writing." << std::endl;
 	    return 1;
     }
     
@@ -195,7 +185,7 @@ int save_data(const DataBufferType& dataBuffer, bool moving=false) {
     csvFile << "\n";
     
     // Log data
-    float ip0 = -10000.0;
+    //float ip0 = -10000.0;
     float pos = xposmax;
     for (const auto& entry : dataBuffer) {
 	    
@@ -204,7 +194,7 @@ int save_data(const DataBufferType& dataBuffer, bool moving=false) {
 		    float tm = std::get<2>(entry) / 1000.0;
 		    float ip = interpolatePosition(tm);
 		    //if (abs(ip0-ip) < 0.01) break;
-		    ip0 = ip;
+		    //ip0 = ip;
 		    pos = ip;
 	    }
 	    csvFile << pos << "," << std::get<1>(entry) << "," << std::get<2>(entry) << "," << std::get<3>(entry) << "," << std::get<4>(entry);

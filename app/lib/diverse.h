@@ -6,6 +6,14 @@
 #include <map>
 #include "parameters.h"
 
+std::string trim(const std::string& str) {
+    size_t first = str.find_first_not_of(" \t\n\r");
+    size_t last = str.find_last_not_of(" \t\n\r");
+    return (first == std::string::npos || last == std::string::npos) 
+           ? "" 
+           : str.substr(first, last - first + 1);
+}
+
 // Utility function to convert string to integer
 int stringToInt(const std::string& str) {
     return std::stoi(str);
@@ -23,7 +31,10 @@ void floatToByteArray(float value, unsigned char* byteArray) {
 
 // Utility function to convert string to boolean
 bool stringToBool(const std::string& str) {
-    std::string lowerStr = str;
+
+    // Trim white-space characters
+    std::string lowerStr = trim(str);
+
     // Convert the input string to lowercase for case-insensitive comparison
     std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::tolower);
 
@@ -147,5 +158,6 @@ int mapValue(int x) {
     }
     return 0; // This line will not actually be reached due to the above logic handling all possible cases.
 }
+
 
 #endif

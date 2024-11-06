@@ -31,6 +31,7 @@ int fd = -1;
 
 void pack_command(char command, float payload) {
 	
+    tcflush(fd, TCIOFLUSH);
 	unsigned char tx_buffer[20];
     unsigned char *p_tx_buffer;
     p_tx_buffer = &tx_buffer[0];

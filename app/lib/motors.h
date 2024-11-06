@@ -18,6 +18,13 @@
 std::vector<int> timeSeries;
 std::vector<int> positionSeries;
 
+bool IsMotorZeroed() {
+    pack_command('o', 0);   // Send command to read log
+    
+    // Read log bytes
+    std::string receivedData = readResponse();
+    return stringToBool(receivedData);
+}
 
 void MoveMotorToPosition(float xpos) {
 
@@ -26,7 +33,6 @@ void MoveMotorToPosition(float xpos) {
 }
 
 void MotorSpeed(float xspeed) {
-
     pack_command('s', xspeed);
     std::cout << readResponse() << std::endl;
 }
@@ -37,8 +43,8 @@ void MoveMotor500um(int sleepdelay) {
 }
 
 void InitMotorPosition() {
-    
-    printf("Resetting motor\n");
+
+    std::cout << "Resetting motor" << std::endl;
     
     // Reconfiguration
     pack_command('c' , 0);
@@ -93,10 +99,10 @@ void decodeLog(const std::string& encodedLog) {
         X1 = std::stoi(encodedLog.substr(commaIndex + 1, endIndex - commaIndex - 1));
         deltaEncoded = encodedLog.substr(endIndex + 1, encodedLog.find('#') - endIndex - 1);
     } catch (const std::invalid_argument& e) {
-        std::cerr << "Error: Invalid number format in the log header." << std::endl;
+        std::cout << "Error: Invalid number format in the log header." << std::endl;
         return;
     } catch (const std::out_of_range& e) {
-        std::cerr << "Error: Number out of range in the log header." << std::endl;
+        std::cout << "Error: Number out of range in the log header." << std::endl;
         return;
     }
 
@@ -132,6 +138,7 @@ void decodeLog(const std::string& encodedLog) {
 
 void GetLog() {
     
+    std::cout << "Reading Log" << std::endl;
     tcflush(fd, TCIOFLUSH); // Discard both input and output data
     pack_command('l', 0);   // Send command to read log
     
@@ -152,6 +159,24 @@ void NeedleMotorPosition(float p) {
 
     pack_command('p', pos);
     usleep(10000);
+}
+
+float ReadMotorPosition() {
+
+    pack_command('g', 0);
+    std::string position_string = readResponse();
+
+    float position = 0.0;
+
+    // Extract position
+    try {
+        position = stringToFloat(trim(position_string));
+    } 
+    catch (const std::invalid_argument& e) {
+        std::cout << "Error: Invalid format in the response." << std::endl;
+    }
+
+    return position;
 }
 
 #endif

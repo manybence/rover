@@ -7,6 +7,7 @@
 #include "signal_processing.h"
 #include "relay.h"
 #include "file_handler.h"
+#include <thread>
 
 #define DOPPLER_START_PULSE (10 * 128)
 #define DOPPLER_END_PULSE   ((10 * 128) + 128)
@@ -81,13 +82,24 @@ int processDopplerMode() {
     int _dacval, _offset, _hiloval;
     DACDeltaCalculator dacDelta;
     bool autogain;
+    int expectedtime_us;
 
     //ARRAY_SIZE is the full 7168 samples deep buffer - for doppler data
     std::vector<int16_t> raw_input_data(ARRAY_SIZE);
     std::vector<double_t> raw_input_data_d(ARRAY_SIZE);
     std::vector<int32_t> filtereddata(ARRAY_SIZE);
     std::vector<double> hilbertindata = {};
-    std::cerr << "Debug: Starting processDopplerMode function\n";
+    std::cout << "Debug: Starting processDopplerMode function\n";
+
+    // Move to starting position
+	std::cout << "Start moving to starting position" << std::endl;
+    float curr_pos = ReadMotorPosition(); // Read current position
+    float distance = abs(curr_pos - xposmin);
+	tcflush(fd, TCIOFLUSH); // Discard both input and output data
+    MotorSpeed(xspeed);//mm pr sec  ..
+    MoveMotorToPosition(xposmin); //test - ok full range movement
+    expectedtime_us = GuardTime + (distance * 1000000) / xspeed;
+    std::this_thread::sleep_for(std::chrono::microseconds(expectedtime_us));
     
 	// Move to scanning position
 	std::cout << "Moving to target position" << std::endl;
@@ -95,7 +107,7 @@ int processDopplerMode() {
     float motortarget = xposmax; // [mm]
     MotorSpeed(xspeed);//mm pr sec  ..
     MoveMotorToPosition(motortarget); //test - ok full range movement
-    int expectedtime_us = GuardTime + (motortarget * 1000000) / xspeed;
+    expectedtime_us = GuardTime + (motortarget * 1000000) / xspeed;
     usleep(expectedtime_us);
 
 	// Buffer to store raw input data
@@ -178,7 +190,7 @@ int processDopplerMode() {
 
 int processAMode() {
 	
-	std::cerr << "Debug: Starting process A-Mode function\n";
+	std::cout << "Debug: Starting process A-Mode function\n";
 	
     float xpos = 0.0;
     int i;
@@ -191,12 +203,22 @@ int processAMode() {
     DataBufferType dataBuffer;
     std::vector<std::vector<double>> dataarray;
 
+    // Move to starting position
+	std::cout << "Start moving to starting position" << std::endl;
+    float curr_pos = ReadMotorPosition(); // Read current position
+    float distance = abs(curr_pos - xposmin);
+    MotorSpeed(xspeed);//mm pr sec  ..
+    MoveMotorToPosition(xposmin); //test - ok full range movement
+    expectedtime_us = GuardTime + (distance * 1000000) / xspeed;
+    std::this_thread::sleep_for(std::chrono::microseconds(expectedtime_us));
+
+
 	// Start scanning motion
 	std::cout << "Moving to target position" << std::endl;
-	tcflush(fd, TCIOFLUSH); // Discard both input and output data
     MotorSpeed(xspeed);//mm pr sec  ..
     MoveMotorToPosition(xposmax); //test - ok full range movement
-    expectedtime_us = GuardTime + (xposmax * 1000000) / xspeed;
+    distance = abs(xposmax - xposmin);
+    expectedtime_us = GuardTime + (distance * 1000000) / xspeed;
 
 	// Configure FPGA
     _dacval = manualgain;
@@ -234,7 +256,6 @@ int processAMode() {
     release_HW();
 
 	// Get position log
-    std::cout << "Get Log" << std::endl;
     GetLog();
 
     // Write all buffered data to CSV
@@ -245,7 +266,7 @@ int processAMode() {
 
 int processMMode() {
 	
-	std::cerr << "Debug: Starting process M-Mode function\n";
+	std::cout << "Debug: Starting process M-Mode function\n";
 	
 	float xpos = 0.0;
     int i;
@@ -255,19 +276,17 @@ int processMMode() {
 
     //A_MODE_BUFLEN is a the 4004 samples deep buffer - enough to hold full depth A_MODE
     std::vector<int16_t> raw_input_data_A(A_MODE_BUFLEN);
-   
-
-    // Buffer to store raw input data
     DataBufferType dataBuffer;
     std::vector<std::vector<double>> dataarray;
 
 	// Move to scanning position
-	std::cout << "Moving to target position" << std::endl;
-	tcflush(fd, TCIOFLUSH); // Discard both input and output data
+    std::cout << "Moving to target position" << std::endl;
+    float curr_pos = ReadMotorPosition(); // Read current position
+    float distance = abs(curr_pos - xposmax);
     MotorSpeed(xspeed);//mm pr sec  ..
     MoveMotorToPosition(xposmax); //test - ok full range movement
-    expectedtime_us = GuardTime + (xposmax * 1000000) / xspeed;
-    usleep(expectedtime_us);
+    expectedtime_us = GuardTime + (distance * 1000000) / xspeed;
+    std::this_thread::sleep_for(std::chrono::microseconds(expectedtime_us));
 
 	// Configure FPGA
     _dacval = manualgain;
@@ -285,7 +304,7 @@ int processMMode() {
             fpga_scan();
             auto now = std::chrono::high_resolution_clock::now();
             auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count() - then_us;
-            if (scanning_time < microseconds){
+            if (scanning_time * 1000 < microseconds){
                 stopFlag = true; // To end and display time results (test)
             }
 
@@ -314,10 +333,10 @@ int processMMode() {
 
 }
 
-int processNeedleMode() {
-    std::cerr << "Debug: Starting processNeedleMode function\n";
+int processNeedleMode(float depth) {
+    std::cout << "Debug: Starting processNeedleMode function\n";
     InitMotorCommunication();
-    NeedleMotorPosition(needlepos);
+    NeedleMotorPosition(depth);
     return 0;
 }
 

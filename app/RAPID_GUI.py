@@ -42,6 +42,12 @@ def start_scan():
     status_label.set_status("Scanning finished")
     display.update_image()
 
+def on_mode_change(value):
+    a_mode_exp.visible = (value == 'A-MODE') 
+    doppler_exp.visible = (value == 'DOPPLER') 
+    m_mode_exp.visible = (value == 'M-MODE') 
+    XPOSMIN_input.visible = (value in ['A-MODE', 'DOPPLER']) 
+
 # Ensure stored values include all keys from defaults
 defaults = ph.read_default_values()
 stored_values = app.storage.general.get('current_values', {})
@@ -64,32 +70,29 @@ with ui.row().style('width: 100%; display: flex; flex-wrap: wrap;'):
         # Scanning
         with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
             ui.label('ACTION').style('font-weight: bold;').style('width: 100%;')
-            MODE_input = ui.select(['A-MODE', 'DOPPLER', 'M-MODE', 'NEEDLE'], label='MODE OF OPERATION', value=current_values['MODE']).style('width: 33%;')
-            NEEDLEPOS_input = ui.number(label='NEEDLE DEPTH (mm)', value=current_values['NEEDLEPOS'], min=current_values['ZPOSMIN'], max=current_values['ZPOSMAX'], step=0.1, format='%.1f').style('width: 33%;')
+            MODE_input = ui.select(
+                ['A-MODE', 'DOPPLER', 'M-MODE', 'NEEDLE'], 
+                label='MODE OF OPERATION', 
+                value=current_values['MODE'],
+                on_change = lambda e: on_mode_change(e.value)).style('width: 33%;')
             COMMENT_input = ui.textarea(label='Comments', value=current_values['COMMENT']).style('width: 100%;')
             ui.button('START', on_click=start_scan).style('width: 100%;')
             
         # Settings
         with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
-            with ui.expansion('SETTINGS', icon='settings').classes('w-full').style('font-weight: bold;'):
-                
-                # Movement settings
-                with ui.expansion('MOVEMENT', icon='settings').classes('w-full').style('font-weight: bold;'):
-                    ui.label('X-MOVEMENT (CARRIAGE RANGE)').style('font-weight: bold;')
-                    with ui.row().style('width: 100%;'):
-                        XPOSMIN_input = ui.number(label='MIN (mm)', value=current_values['XPOSMIN'], min=0.0, max=100.0, step=0.1, format='%.1f').style('width: 25%;')
-                        XPOSMAX_input = ui.number(label='MAX (mm)', value=current_values['XPOSMAX'], min=0.0, max=100.0, step=0.1, format='%.1f').style('width: 25%;')
-                        XSTEP_input = ui.number(label='STEP (mm)', value=current_values['XSTEP'], min=0.1, max=5.0, step=0.1, format='%.1f').style('width: 25%;')
-                        SPEED_input = ui.number(label='SPEED (mm/s)', value=current_values['SPEED'], min=0.5, max=50.0, step=0.1, format='%.1f').style('width: 25%;')
 
-                    ui.label('Z-MOVEMENT (NEEDLE RANGE)').style('font-weight: bold;')
-                    with ui.row().style('width: 100%;'):
-                        ZPOSMIN_input = ui.number(label='MIN (mm)', value=current_values['ZPOSMIN'], min=0.0, max=30.0, step=0.1, format='%.1f').style('width: 25%;')
-                        ZPOSMAX_input = ui.number(label='MAX (mm)', value=current_values['ZPOSMAX'], min=0.0, max=30.0, step=0.1, format='%.1f').style('width: 25%;')
-                
-                # A-mode settings
-                with ui.expansion('A-MODE', icon='settings').classes('w-full').style('font-weight: bold;'):
-                    with ui.row():
+            # Movement settings
+            with ui.expansion('MOVEMENT', icon='settings').classes('w-full').style('font-weight: bold;'):
+                ui.label('X-MOVEMENT (CARRIAGE RANGE)').style('font-weight: bold;')
+                with ui.row().style('width: 100%;'):
+                    XPOSMIN_input = ui.number(label='START (mm)', value=current_values['XPOSMIN'], min=2.0, max=60.0, step=0.1, format='%.1f').style('width: 25%;')
+                    XPOSMAX_input = ui.number(label='TARGET (mm)', value=current_values['XPOSMAX'], min=2.0, max=60.0, step=0.1, format='%.1f').style('width: 25%;')
+                    SPEED_input = ui.number(label='SPEED (mm/s)', value=current_values['SPEED'], min=0.5, max=50.0, step=0.1, format='%.1f').style('width: 25%;')
+
+            # A-mode settings
+            a_mode_exp = ui.expansion('A-MODE', icon='settings').classes('w-full').style('font-weight: bold;')
+            with a_mode_exp:
+                with ui.row():
                         A_MODE_AUTOGAIN_input = ui.checkbox('AUTO GAIN', value=current_values['A_MODE_AUTOGAIN']).style('width: 40%;')
                         A_MODE_MANUALGAIN_input = ui.number(label='MANUAL GAIN', value=current_values['A_MODE_MANUALGAIN']).style('width: 40%;')
                         A_MODE_OFFSETMIN_input = ui.number(label='OFFSET MIN', value=current_values['A_MODE_OFFSETMIN']).style('width: 40%;')
@@ -101,14 +104,18 @@ with ui.row().style('width: 100%; display: flex; flex-wrap: wrap;'):
                         A_MODE_SCANLINES_input = ui.number('SCANLINES', value=current_values['A_MODE_SCANLINES'], min=1, max=1000).style('width: 40%;')
             
             
-                # M-mode settings
-                with ui.expansion('M-MODE', icon='settings').classes('w-full').style('font-weight: bold;'):
-                    with ui.row():
-                        M_MODE_SCANTIME_input = ui.number('SCAN TIME (us)', value=current_values['M_MODE_SCANTIME']).style('width: 100%;')
-            
-                # Doppler settings
-                with ui.expansion('DOPPLER', icon='settings').classes('w-full').style('font-weight: bold;'):
-                    with ui.row():
+            # M-mode settings
+            m_mode_exp = ui.expansion('M-MODE', icon='settings').classes('w-full').style('font-weight: bold;')
+            m_mode_exp.visible = False
+            with m_mode_exp:
+                with ui.row():
+                    M_MODE_SCANTIME_input = ui.number('SCAN TIME (ms)', value=current_values['M_MODE_SCANTIME']).style('width: 100%;')
+        
+            # Doppler settings
+            doppler_exp = ui.expansion('DOPPLER', icon='settings').classes('w-full').style('font-weight: bold;')
+            doppler_exp.visible = False
+            with doppler_exp:
+                with ui.row():
                         DOPPLER_AUTOGAIN_input = ui.checkbox('AUTO GAIN', value=current_values['DOPPLER_AUTOGAIN']).style('width: 40%;')
                         DOPPLER_MANUALGAIN_input = ui.number(label='MANUAL GAIN', value=current_values['DOPPLER_MANUALGAIN']).style('width: 40%;')
                         DOPPLER_OFFSETMIN_input = ui.number(label='OFFSET MIN', value=current_values['DOPPLER_OFFSETMIN']).style('width: 40%;')
