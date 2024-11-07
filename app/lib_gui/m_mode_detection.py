@@ -46,7 +46,7 @@ def m_mode_imaging(path, template):
     title = f"M-mode at XPOS: {xpos} mm, "
     plt.title(title + notification)
 
-    return depth
+    return depth, energies, xpos
 
 if __name__ == "__main__":
 

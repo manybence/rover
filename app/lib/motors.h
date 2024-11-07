@@ -76,9 +76,7 @@ float interpolatePosition(float time) {
 };
 
 void decodeLog(const std::string& encodedLog) {
-    
-    std::cout << "Decoding log\n" << std::endl;
-    
+        
     int X0, X1;
     std::string deltaEncoded;
     std::string encodedPair;
@@ -129,10 +127,7 @@ void decodeLog(const std::string& encodedLog) {
         T += deltaTime;
         timeSeries.push_back(T);
     }
-    
-    std::cout << "Starting pos: " << X0 << std::endl;
-    std::cout << "Ending pos: " << X1 << std::endl;
-    std::cout << "Time elapsed: " << T << std::endl;
+    pos_final = X1;
 } 
 
 void GetLog() {
@@ -176,6 +171,30 @@ float ReadMotorPosition() {
     }
 
     return position;
+}
+
+std::vector<float> generate_xpos_range() {
+    
+    // Create range of Xpos values
+    std::vector<float> xpos_values;
+
+    // Check if xstep is positive; if not, throw an error
+    if (xstep <= 0) {
+        throw std::invalid_argument("XSTEP must be greater than zero.");
+    }
+
+    // Check if the range is divisible by xstep, otherwise default to xstep = 1
+    float range = xposmax - xposmin;
+    if (std::fmod(range, xstep) != 0) {
+        xstep = 1.0;
+    }
+
+    // Generate xpos values within the range using the step size
+    for (float xpos = xposmin; xpos <= xposmax; xpos += xstep) {
+        xpos_values.push_back(xpos);
+    }
+
+    return xpos_values;
 }
 
 #endif

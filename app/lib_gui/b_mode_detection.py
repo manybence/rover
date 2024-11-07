@@ -67,7 +67,7 @@ def b_mode_imaging(path):
     plt.show()
 
     notification = ""
-    title = f"B-mode at XPOS: {min(xpos)} - {max(xpos)} mm, "
+    title = f"B-mode at XPOS: {min(xpos)} - {round(max(xpos), 1)} mm, "
     plt.title(title + notification)
 
     return

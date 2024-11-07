@@ -83,7 +83,10 @@ void InitHW(bool is_configured) {
     }
     
     // Activate selected port
-    if (compareStrings(parameters["MODE"], "A-MODE") || compareStrings(parameters["MODE"], "M-MODE")) {port = parameters["A_MODE_PORT"];};
+    if (compareStrings(parameters["MODE"], "A-MODE") || 
+        compareStrings(parameters["MODE"], "M-MODE") || 
+        compareStrings(parameters["MODE"], "M-MODE FULL SCAN")) 
+        {port = parameters["A_MODE_PORT"];};
     if (compareStrings(parameters["MODE"], "DOPPLER")) {port = parameters["DOPPLER_PORT"];};
     ActivatePort(lookupString(port, translationTable));
 

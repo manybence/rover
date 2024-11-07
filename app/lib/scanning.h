@@ -73,6 +73,23 @@ void signalHandler(int signum) {
     stopFlag = true;
 }
 
+int moveToPos(float xpos) {
+
+    // Move to a given X-position
+    try {
+        float curr_pos = ReadMotorPosition(); // Read current position
+        float distance = abs(curr_pos - xpos);
+        MoveMotorToPosition(xpos);
+        int expectedtime_us = GuardTime + (distance * 1000000) / xspeed;
+        std::this_thread::sleep_for(std::chrono::microseconds(expectedtime_us));
+        return 0;
+    }
+    catch (const std::runtime_error& e) {
+        std::cerr << "Runtime error: " << e.what() << std::endl;
+        return -1;
+    }
+}
+
 int processDopplerMode() {
 
     std::cout << "Debug: Starting processDopplerMode function\n";
@@ -85,7 +102,6 @@ int processDopplerMode() {
     int _dacval, _offset, _hiloval;
     DACDeltaCalculator dacDelta;
     bool autogain;
-    int expectedtime_us;
 
     //ARRAY_SIZE is the full 7168 samples deep buffer - for doppler data
     std::vector<int16_t> raw_input_data(ARRAY_SIZE);
@@ -94,22 +110,10 @@ int processDopplerMode() {
     std::vector<double> hilbertindata = {};
     DataBufferType dataBuffer;
     std::vector<std::vector<double>> dataarray;
-
-    // Move to starting position
-	std::cout << "Start moving to starting position" << std::endl;
-    float curr_pos = ReadMotorPosition(); // Read current position
-    float distance = abs(curr_pos - xposmin);
-    MotorSpeed(xspeed); // [mm/s]
-    MoveMotorToPosition(xposmin);
-    expectedtime_us = GuardTime + (distance * 1000000) / xspeed;
-    std::this_thread::sleep_for(std::chrono::microseconds(expectedtime_us));
     
 	// Move to scanning position
 	std::cout << "Moving to target position" << std::endl;
-    float motortarget = xposmax; // [mm]
-    MoveMotorToPosition(motortarget); //test - ok full range movement
-    expectedtime_us = GuardTime + (motortarget * 1000000) / xspeed;
-    std::this_thread::sleep_for(std::chrono::microseconds(expectedtime_us));
+    moveToPos(xposmax); // Move to target pos
 
     // Start scanning
     auto then    = std::chrono::high_resolution_clock::now();
@@ -179,9 +183,6 @@ int processDopplerMode() {
 	// Write all buffered data to CSV
    if (SAVE_AS_CSV) save_data(dataBuffer, false);
    
-   // Release hardware
-   release_HW();
-   
    return 0;
 }
 
@@ -194,25 +195,17 @@ int processAMode() {
     int expectedtime_us;
     int _dacval, _offset, _hiloval;
     DACDeltaCalculator dacDelta;
-
-    //A_MODE_BUFLEN is a the 4004 samples deep buffer - enough to hold full depth A_MODE
     std::vector<int16_t> raw_input_data_A(A_MODE_BUFLEN);
     DataBufferType dataBuffer;
     std::vector<std::vector<double>> dataarray;
 
     // Move to starting position
-	std::cout << "Start moving to starting position" << std::endl;
-    float curr_pos = ReadMotorPosition(); // Read current position
-    float distance = abs(curr_pos - xposmin);
-    MotorSpeed(xspeed); // [mm/s]
-    MoveMotorToPosition(xposmin);
-    expectedtime_us = GuardTime + (distance * 1000000) / xspeed;
-    std::this_thread::sleep_for(std::chrono::microseconds(expectedtime_us));
+	moveToPos(xposmin); // Move to target pos
 
 	// Start scanning motion
 	std::cout << "Moving to target position" << std::endl;
     MoveMotorToPosition(xposmax);
-    distance = abs(xposmax - xposmin);
+    float distance = abs(xposmax - xposmin);
     expectedtime_us = GuardTime + (distance * 1000000) / xspeed;
 
 	// Configure FPGA
@@ -222,6 +215,7 @@ int processAMode() {
     
     // Start FPGA scanning
     std::cout << "Start Scanning" << std::endl;
+    stopFlag = false;
     resetFPGA();
     fpga(txpat, _dacval, _hiloval, _offset);
     auto then = std::chrono::high_resolution_clock::now();
@@ -231,9 +225,7 @@ int processAMode() {
             fpga_scan();
             auto now = std::chrono::high_resolution_clock::now();
             auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count() - then_us;
-            if (expectedtime_us < microseconds){
-                stopFlag = true;
-            }
+            if (expectedtime_us < microseconds) stopFlag = true;
 
             // Read first sample twice (dummy stuff in spi buffer need to be discarded so a read from any addres would do)
             read_fpga_line(A_MODE_READOUT_OFFSET);
@@ -246,9 +238,6 @@ int processAMode() {
             // Buffer the data in RAM
             dataBuffer.emplace_back(xpos, _hiloval, microseconds, _dacval, _offset, raw_input_data_A);
     }
-
-	// Release hardware
-    release_HW();
 
 	// Get position log
     GetLog();
@@ -259,28 +248,19 @@ int processAMode() {
     return 0;
 }
 
-int processMMode() {
+int processMMode(float xpos_target) {
 	
 	std::cout << "Debug: Starting process M-Mode function\n";
 	
-	float xpos = 0.0;
     int i;
-    int expectedtime_us;
     int _dacval, _offset, _hiloval;
     DACDeltaCalculator dacDelta;
-
-    //A_MODE_BUFLEN is a the 4004 samples deep buffer - enough to hold full depth A_MODE
     std::vector<int16_t> raw_input_data_A(A_MODE_BUFLEN);
     DataBufferType dataBuffer;
     std::vector<std::vector<double>> dataarray;
 
 	// Move to scanning position
-    float curr_pos = ReadMotorPosition(); // Read current position
-    float distance = abs(curr_pos - xposmax);
-    MotorSpeed(xspeed);// [mm/s] 
-    MoveMotorToPosition(xposmax); 
-    expectedtime_us = GuardTime + (distance * 1000000) / xspeed;
-    std::this_thread::sleep_for(std::chrono::microseconds(expectedtime_us));    // Wait until target pos reached
+    moveToPos(xpos_target); // Move to target pos
 
 	// Configure FPGA
     _dacval = manualgain;
@@ -288,6 +268,7 @@ int processMMode() {
     _hiloval = 0;
     
     // Start FPGA scanning
+    stopFlag = false;
     std::cout << "Start Scanning" << std::endl;
     resetFPGA();
     fpga(txpat, _dacval, _hiloval, _offset);
@@ -295,36 +276,52 @@ int processMMode() {
     auto then_us = std::chrono::duration_cast<std::chrono::microseconds>(then.time_since_epoch()).count();
     while (!stopFlag) {
         dataarray.clear();
-            fpga_scan();
-            auto now = std::chrono::high_resolution_clock::now();
-            auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count() - then_us;
-            if (scanning_time * 1000 < microseconds){
-                stopFlag = true;
-            }
+        fpga_scan();
+        auto now = std::chrono::high_resolution_clock::now();
+        auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count() - then_us;
+        if (scanning_time * 1000 < microseconds) stopFlag = true;
 
-            // Read first sample twice (dummy stuff in spi buffer need to be discarded so a read from any addres would do)
-            read_fpga_line(A_MODE_READOUT_OFFSET);
+        // Read first sample twice (dummy stuff in spi buffer need to be discarded so a read from any addres would do)
+        read_fpga_line(A_MODE_READOUT_OFFSET);
 
-            // Read captured lines
-            for (i = 0; i < A_MODE_BUFLEN; i++) {
-                raw_input_data_A[i] = read_fpga_line(i + A_MODE_READOUT_OFFSET);
-            };
-            
-            // Buffer the data in RAM
-            dataBuffer.emplace_back(xpos, _hiloval, microseconds, _dacval, _offset, raw_input_data_A);
+        // Read captured lines
+        for (i = 0; i < A_MODE_BUFLEN; i++) {
+            raw_input_data_A[i] = read_fpga_line(i + A_MODE_READOUT_OFFSET);
+        };
+        
+        // Buffer the data in RAM
+        dataBuffer.emplace_back(xpos_target, _hiloval, microseconds, _dacval, _offset, raw_input_data_A);
     }
 
-	// Release hardware
-    release_HW();
-
 	// Get position log
-    std::cout << "Get Log" << std::endl;
     GetLog();
 
     // Write all buffered data to CSV
     if (SAVE_AS_CSV) save_data(dataBuffer, false);
     return 0;
 
+}
+
+int processMFullScan() {
+
+    std::cout << "Debug: Starting process M-Mode full scan function\n";
+
+    // Create range of Xpos values
+    std::vector<float> xpos_values = generate_xpos_range();
+
+    // Perform M-mode scan at each given XPOS
+    int counter = 0;
+    std::string logfilename = datfilename;
+    for (float xpos_target : xpos_values) {
+        std::cout << "Next target: " << xpos_target << std::endl;
+        datfilename = update_filename(logfilename, counter);
+        processMMode(xpos_target); // Perform M-mode scan
+        counter++;
+    }
+
+    std::cout << "Full M-mode scan finished!" << std::endl;
+
+    return 0;
 }
 
 int processNeedleMode(float depth) {

@@ -96,6 +96,13 @@ def display(image, time, title):
     plt.title(title)
     plt.xlabel("Time (s)")
     plt.ylabel("Depth (mm)")
+
+def display_full_scan(image, positions, title):
+    fig = plt.figure()
+    plt.imshow(image, extent=(min(positions), max(positions), image.shape[0] * 1000 * wave_velocity / sampling_freq, 0), aspect='auto', cmap='gray')    
+    plt.title(title)
+    plt.xlabel("XPOS (mm)")
+    plt.ylabel("Depth (mm)")
     
 def plot_signal_analysis(signal):
     

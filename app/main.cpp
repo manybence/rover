@@ -27,21 +27,29 @@ int main(int argc, char* argv[]) {
     // Initialize hardware
 	printf("Initialisation of HW\n");
     InitHW(configured);
+    MotorSpeed(xspeed); // [mm/s] 
     
     // Start scanning process
     if (compareStrings(parameters["MODE"], "DOPPLER")) {
-        return processDopplerMode();
+        processDopplerMode();
     } else
     if (compareStrings(parameters["MODE"], "M-MODE")) {
-        return processMMode();
+        processMMode(xposmax);
+    } else
+    if (compareStrings(parameters["MODE"], "M-MODE FULL SCAN")) {
+        processMFullScan();
     } else
     if (compareStrings(parameters["MODE"], "A-MODE")) {
-        return processAMode();
+        processAMode();
     } else
     if (compareStrings(parameters["MODE"], "NEEDLE")) {
-        return processNeedleMode(depth);
+        processNeedleMode(depth);
     } else {
-        return -1;
+        std::cout << "Invalid mode of operation " << std::endl;
     }
+
+    // Release hardware
+    release_HW();
+    return 0;
 }
 

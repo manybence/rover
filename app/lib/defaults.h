@@ -49,6 +49,7 @@ int manualgain  =   400;
 float xposmin   =   5.0; //mm
 float xposmax   = 50.0; //1/10 mm
 float xspeed     = 8.0;   // 8 mm/s
+float xstep = 1.0; //mm
 int filsel = 0;
 int scanning_time = 3000;   // M-mode scanning (ms)
 unsigned char txpat = TXPAT2;
@@ -57,6 +58,7 @@ const int ARRAY_SIZE = 7168;
 bool IsDopplerMode = false;
 int h;
 bool configured = false;
+int pos_final = 0;
 
 // The following tables is for 60 deg doppler angle 10 MHz probe (SensorScan) STRATEG is a strategy for start serching the most likely place of the FA.
 #define STGHIGH   32 * 4

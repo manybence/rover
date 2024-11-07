@@ -10,6 +10,17 @@ using DataBufferType = std::vector<std::tuple<float, int, long long, int, int, s
 
 std::string logfilename, datfilename, picfilename;
 
+std::string update_filename(std::string filename, int counter) {
+
+    // Extract filename
+    std::string baseName = filename.substr(0, filename.find_last_of('.'));  // Extract "log0000" part
+    std::string extension = filename.substr(filename.find_last_of('.'));  // Extract ".csv" part
+
+    // Create a new filename by appending a counter value
+    std::string newFilename = baseName + "_" + std::to_string(counter) + extension;
+    return newFilename;
+}
+
 std::string generate_filename(const std::string& directory) {
     int counter = 0;
     std::ostringstream oss;
@@ -34,7 +45,7 @@ void GetParameters(int argc, char* argv[]) {
 	
     // Predefined key order
     std::vector<std::string> keyOrder = {
-        "XPOSMIN", "XPOSMAX", "XSPEED", "A_MODE_OFFSETMIN", "A_MODE_OFFSETMAX", 
+        "XPOSMIN", "XPOSMAX", "XSPEED", "XSTEP", "A_MODE_OFFSETMIN", "A_MODE_OFFSETMAX", 
         "A_MODE_AUTOGAIN", "A_MODE_MANUALGAIN", "A_MODE_GAINRATE", "A_MODE_FILTERTYPE", 
         "M_MODE_SCANTIME", "DOPPLER_OFFSETMIN", "DOPPLER_OFFSETMAX", "DOPPLER_AUTOGAIN", 
         "DOPPLER_MANUALGAIN", "DOPPLER_FILTERTYPE", "A_MODE_PORT", "DOPPLER_PORT", 
@@ -42,6 +53,7 @@ void GetParameters(int argc, char* argv[]) {
         "A_MODE_SCANLINES", "DOPPLER_SCANLINES", "COMMENT", "IS_CONFIGURED"
     };
 
+    // Read variables from command line, in the defined order
     for (size_t i = 0; i < keyOrder.size() && i < static_cast<size_t>(argc) - 1; ++i) {
         const std::string& key = keyOrder[i]; 
         parameters[key] = std::string(argv[i + 1]); 
@@ -77,6 +89,7 @@ void GetParameters(int argc, char* argv[]) {
     xposmin   = stringToFloat(parameters["XPOSMIN"]);
     xposmax   = stringToFloat(parameters["XPOSMAX"]);
     xspeed    = stringToFloat(parameters["XSPEED"]);
+    xstep       = stringToFloat(parameters["XSTEP"]);
     scanning_time = stringToFloat(parameters["M_MODE_SCANTIME"]);
     configured = stringToBool(parameters["IS_CONFIGURED"]);
 };
@@ -153,7 +166,7 @@ int save_data(const DataBufferType& dataBuffer, bool moving=false) {
     
     // Log data
     //float ip0 = -10000.0;
-    float pos = xposmax;
+    float pos = pos_final;
     for (const auto& entry : dataBuffer) {
 	    
 	    // Log variables

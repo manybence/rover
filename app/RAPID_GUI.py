@@ -43,6 +43,7 @@ def start_scan():
     # Process image
     if (MODE_input.value == 'A-MODE'): ph.process_b_mode_image()
     elif (MODE_input.value == 'M-MODE'): ph.process_m_mode_image()
+    elif (MODE_input.value == 'M-MODE FULL SCAN'): ph.process_m_mode_scan()
 
     # Update GUI
     print("Scanning finished")
@@ -52,8 +53,9 @@ def start_scan():
 def on_mode_change(value):
     a_mode_exp.visible = (value == 'A-MODE') 
     doppler_exp.visible = (value == 'DOPPLER') 
-    m_mode_exp.visible = (value == 'M-MODE') 
-    XPOSMIN_input.visible = (value in ['A-MODE', 'DOPPLER']) 
+    m_mode_exp.visible = (value in ['M-MODE', 'M-MODE FULL SCAN']) 
+    XPOSMIN_input.visible = (value in ['A-MODE', 'DOPPLER', 'M-MODE FULL SCAN']) 
+    XSTEP_input.visible = (value == 'M-MODE FULL SCAN')
 
 # Ensure stored values include all keys from defaults
 defaults = ph.read_default_values()
@@ -78,7 +80,7 @@ with ui.row().style('width: 100%; display: flex; flex-wrap: wrap;'):
         with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
             ui.label('ACTION').style('font-weight: bold;').style('width: 100%;')
             MODE_input = ui.select(
-                ['A-MODE', 'DOPPLER', 'M-MODE', 'NEEDLE'], 
+                ['A-MODE', 'DOPPLER', 'M-MODE', "M-MODE FULL SCAN", 'NEEDLE'], 
                 label='MODE OF OPERATION', 
                 value=current_values['MODE'],
                 on_change = lambda e: on_mode_change(e.value)).style('width: 33%;')
@@ -95,6 +97,7 @@ with ui.row().style('width: 100%; display: flex; flex-wrap: wrap;'):
                     XPOSMIN_input = ui.number(label='START (mm)', value=current_values['XPOSMIN'], min=2.0, max=60.0, step=0.1, format='%.1f').style('width: 25%;')
                     XPOSMAX_input = ui.number(label='TARGET (mm)', value=current_values['XPOSMAX'], min=2.0, max=60.0, step=0.1, format='%.1f').style('width: 25%;')
                     SPEED_input = ui.number(label='SPEED (mm/s)', value=current_values['SPEED'], min=0.5, max=50.0, step=0.1, format='%.1f').style('width: 25%;')
+                    XSTEP_input = ui.number(label='XSTEP (mm)', value=current_values['XSTEP'], min=0.1, max=5.0, step=0.1, format='%.1f').style('width: 25%;')
 
             # A-mode settings
             a_mode_exp = ui.expansion('A-MODE', icon='settings').classes('w-full').style('font-weight: bold;')
