@@ -12,7 +12,7 @@ Library for common processing functions for B-mode and M-mode detection
 
 import numpy as np
 from scipy import signal
-from scipy.signal import hilbert
+from scipy.signal import hilbert, correlate
 import matplotlib.pyplot as plt
 
 sampling_freq = 60e6
@@ -37,13 +37,9 @@ def segmentate_image(image, distance_range):
     
     return segmented_image
 
-def signal_filtering(series):   
+def bandpass_filtering(series, cutoff_low, cutoff_high, order=5, fs=60e6):   
     
     #Defining the filter values
-    fs = sampling_freq
-    cutoff_low = 4.7e6
-    cutoff_high = 5.8e6
-    order = 5 
     nyq = 0.5 * fs
     normal_cutoff_low = cutoff_low / nyq
     normal_cutoff_high = cutoff_high / nyq
@@ -55,12 +51,13 @@ def signal_filtering(series):
     return filtered_signal
 
 def log_mapping(image):
-
-    
     c = 255 / np.log(1 + np.max(image))
     log_image = c * (np.log(image + 1))
-
     return log_image
+
+def apply_matched_filter(_signals, _pulse_estimate):
+    matched_filter = _pulse_estimate[::-1]
+    return np.array([correlate(scan, matched_filter, mode='same') for scan in _signals])
 
 def preprocess_image(image, template):
     
@@ -68,7 +65,7 @@ def preprocess_image(image, template):
     signals = []
     for index, row in image.iterrows():
         signal_raw = np.array(row.values)[:max_depth_sample]
-        filtered_signal = signal_filtering(signal_raw)  #Applying band-pass filter
+        filtered_signal = bandpass_filtering(signal_raw, cutoff_low = 4.7e6, cutoff_high = 5.8e6)  #Applying band-pass filter
         matched = signal.lfilter(template, 1, filtered_signal)  #Apply match filter
         envelopes = np.abs(hilbert(matched))   #Hilbert-transformation
         signals.append(envelopes)
@@ -99,7 +96,6 @@ def display(image, time, title):
     plt.title(title)
     plt.xlabel("Time (s)")
     plt.ylabel("Depth (mm)")
-    #plt.yticks([0, 5, 10, 15, 20, 25, 30, 35, 40, 45])
     
 def plot_signal_analysis(signal):
     
@@ -177,3 +173,8 @@ def detect_noise(image, plot_histogram=False):
     
     # A low variance suggests a flat (noisy) image
     return variance < threshold
+
+def linear_remap(_image, _input_min, _input_max):
+    clipped = np.clip(_image, _input_min, _input_max)   # Clip the image to the input range
+    remapped = 255 * (clipped - _input_min) / (_input_max - _input_min) # Remap the intensity values to the range [0, 255]
+    return remapped

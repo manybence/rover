@@ -74,6 +74,9 @@ void signalHandler(int signum) {
 }
 
 int processDopplerMode() {
+
+    std::cout << "Debug: Starting processDopplerMode function\n";
+
     float xpos = 0.0;
     int idx, i, reps;
     int longest_run;
@@ -89,37 +92,31 @@ int processDopplerMode() {
     std::vector<double_t> raw_input_data_d(ARRAY_SIZE);
     std::vector<int32_t> filtereddata(ARRAY_SIZE);
     std::vector<double> hilbertindata = {};
-    std::cout << "Debug: Starting processDopplerMode function\n";
+    DataBufferType dataBuffer;
+    std::vector<std::vector<double>> dataarray;
 
     // Move to starting position
 	std::cout << "Start moving to starting position" << std::endl;
     float curr_pos = ReadMotorPosition(); // Read current position
     float distance = abs(curr_pos - xposmin);
-	tcflush(fd, TCIOFLUSH); // Discard both input and output data
-    MotorSpeed(xspeed);//mm pr sec  ..
-    MoveMotorToPosition(xposmin); //test - ok full range movement
+    MotorSpeed(xspeed); // [mm/s]
+    MoveMotorToPosition(xposmin);
     expectedtime_us = GuardTime + (distance * 1000000) / xspeed;
     std::this_thread::sleep_for(std::chrono::microseconds(expectedtime_us));
     
 	// Move to scanning position
 	std::cout << "Moving to target position" << std::endl;
-	tcflush(fd, TCIOFLUSH); // Discard both input and output data
     float motortarget = xposmax; // [mm]
-    MotorSpeed(xspeed);//mm pr sec  ..
     MoveMotorToPosition(motortarget); //test - ok full range movement
     expectedtime_us = GuardTime + (motortarget * 1000000) / xspeed;
-    usleep(expectedtime_us);
+    std::this_thread::sleep_for(std::chrono::microseconds(expectedtime_us));
 
-	// Buffer to store raw input data
-    DataBufferType dataBuffer;
-    std::vector<std::vector<double>> dataarray;
-    
     // Start scanning
     auto then    = std::chrono::high_resolution_clock::now();
     auto then_us = std::chrono::duration_cast<std::chrono::microseconds>(then.time_since_epoch()).count();
     resetFPGA();
     dataarray.clear();
-    autogain = stringToBool(DOPPLER_AUTOGAIN);
+    autogain = stringToBool(parameters["DOPPLER_AUTOGAIN"]);
     printf("autogain value: %s\n", autogain ? "true" : "false");
     for (idx = offsetmin; idx < offsetmax/*STGHIGH*/; idx++) { //need to decide how HILO is controlled in HW
 
@@ -207,22 +204,20 @@ int processAMode() {
 	std::cout << "Start moving to starting position" << std::endl;
     float curr_pos = ReadMotorPosition(); // Read current position
     float distance = abs(curr_pos - xposmin);
-    MotorSpeed(xspeed);//mm pr sec  ..
-    MoveMotorToPosition(xposmin); //test - ok full range movement
+    MotorSpeed(xspeed); // [mm/s]
+    MoveMotorToPosition(xposmin);
     expectedtime_us = GuardTime + (distance * 1000000) / xspeed;
     std::this_thread::sleep_for(std::chrono::microseconds(expectedtime_us));
 
-
 	// Start scanning motion
 	std::cout << "Moving to target position" << std::endl;
-    MotorSpeed(xspeed);//mm pr sec  ..
-    MoveMotorToPosition(xposmax); //test - ok full range movement
+    MoveMotorToPosition(xposmax);
     distance = abs(xposmax - xposmin);
     expectedtime_us = GuardTime + (distance * 1000000) / xspeed;
 
 	// Configure FPGA
     _dacval = manualgain;
-    _offset = 0;//15; //Somehow the first bit is overwhelmed by tx ringing
+    _offset = 0;
     _hiloval = 0;
     
     // Start FPGA scanning
@@ -280,17 +275,16 @@ int processMMode() {
     std::vector<std::vector<double>> dataarray;
 
 	// Move to scanning position
-    std::cout << "Moving to target position" << std::endl;
     float curr_pos = ReadMotorPosition(); // Read current position
     float distance = abs(curr_pos - xposmax);
-    MotorSpeed(xspeed);//mm pr sec  ..
-    MoveMotorToPosition(xposmax); //test - ok full range movement
+    MotorSpeed(xspeed);// [mm/s] 
+    MoveMotorToPosition(xposmax); 
     expectedtime_us = GuardTime + (distance * 1000000) / xspeed;
-    std::this_thread::sleep_for(std::chrono::microseconds(expectedtime_us));
+    std::this_thread::sleep_for(std::chrono::microseconds(expectedtime_us));    // Wait until target pos reached
 
 	// Configure FPGA
     _dacval = manualgain;
-    _offset = 0;//15; //Somehow the first bit is overwhelmed by tx ringing
+    _offset = 0;
     _hiloval = 0;
     
     // Start FPGA scanning
@@ -305,7 +299,7 @@ int processMMode() {
             auto now = std::chrono::high_resolution_clock::now();
             auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count() - then_us;
             if (scanning_time * 1000 < microseconds){
-                stopFlag = true; // To end and display time results (test)
+                stopFlag = true;
             }
 
             // Read first sample twice (dummy stuff in spi buffer need to be discarded so a read from any addres would do)

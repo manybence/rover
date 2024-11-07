@@ -27,7 +27,6 @@ bool IsMotorZeroed() {
 }
 
 void MoveMotorToPosition(float xpos) {
-
     pack_command('m', xpos);
     std::cout << readResponse() << std::endl;
 }

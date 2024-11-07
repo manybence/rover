@@ -83,8 +83,8 @@ void InitHW(bool is_configured) {
     }
     
     // Activate selected port
-    if (compareStrings(MODE, "A-MODE") || compareStrings(MODE,"M-MODE")) {port = A_MODE_PORT;};
-    if (compareStrings(MODE,"DOPPLER")) {port = DOPPLER_PORT;};
+    if (compareStrings(parameters["MODE"], "A-MODE") || compareStrings(parameters["MODE"], "M-MODE")) {port = parameters["A_MODE_PORT"];};
+    if (compareStrings(parameters["MODE"], "DOPPLER")) {port = parameters["DOPPLER_PORT"];};
     ActivatePort(lookupString(port, translationTable));
 
     usleep(MS1);
@@ -113,7 +113,9 @@ void InitHW(bool is_configured) {
 
     spiOpen(0, SPIRATE, 0);
     usleep(MS200);
-    usleep(3000000); //3 secs. Wait for power rail stabilization
+
+
+    if (compareStrings(parameters["MODE"], "DOPPLER")) {usleep(3000000);} //3 secs. Wait for power rail stabilization
 }
 
 void release_HW() {

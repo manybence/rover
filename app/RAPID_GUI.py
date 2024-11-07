@@ -25,7 +25,14 @@ def start_scan():
     
     # Update parameters
     for key in current_values.keys():
-        current_values[key] = eval(f'{key}_input').value
+        component_name = f'{key}_input'
+        try:
+            component = eval(component_name)
+            if component and hasattr(component, 'value'):
+                current_values[key] = component.value
+        except NameError:
+            pass
+
     app.storage.general['current_values'] = current_values
     status_label.set_status("Scanning")
 
@@ -34,7 +41,7 @@ def start_scan():
     configured = True
 
     # Process image
-    if (MODE_input.value == 'A-MODE'): ph.process_image()
+    if (MODE_input.value == 'A-MODE'): ph.process_b_mode_image()
     elif (MODE_input.value == 'M-MODE'): ph.process_m_mode_image()
 
     # Update GUI
@@ -51,8 +58,8 @@ def on_mode_change(value):
 # Ensure stored values include all keys from defaults
 defaults = ph.read_default_values()
 stored_values = app.storage.general.get('current_values', {})
-current_values = {**defaults, **stored_values}
-current_values = {k: current_values[k] for k in defaults.keys()}
+current_values = defaults.copy()
+current_values.update(stored_values)
     
 # GUI setup
 ui.page_title("RAPID GUI")
@@ -136,6 +143,4 @@ with ui.row().style('width: 100%; display: flex; flex-wrap: wrap;'):
         # Display available files
         components.available_files()
  
-
-
 ui.run(show=False, favicon=favicon_path)

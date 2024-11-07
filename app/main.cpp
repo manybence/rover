@@ -29,16 +29,16 @@ int main(int argc, char* argv[]) {
     InitHW(configured);
     
     // Start scanning process
-    if (compareStrings(MODE,"DOPPLER")) {
+    if (compareStrings(parameters["MODE"], "DOPPLER")) {
         return processDopplerMode();
     } else
-    if (compareStrings(MODE,"M-MODE")) {
+    if (compareStrings(parameters["MODE"], "M-MODE")) {
         return processMMode();
     } else
-    if (compareStrings(MODE,"A-MODE")) {
+    if (compareStrings(parameters["MODE"], "A-MODE")) {
         return processAMode();
     } else
-    if (compareStrings(MODE,"NEEDLE")) {
+    if (compareStrings(parameters["MODE"], "NEEDLE")) {
         return processNeedleMode(depth);
     } else {
         return -1;

@@ -4,7 +4,7 @@
 #include "defaults.h"
 #include "serial_comm.h"
 
-std::string FILES_DIRECTORY = "/home/rapid/projects/rover/app/data/";
+std::string FILES_DIRECTORY = "/home/rapid/projects/rover/log/";
 
 using DataBufferType = std::vector<std::tuple<float, int, long long, int, int, std::vector<int16_t>>>;
 
@@ -22,105 +22,72 @@ std::string generate_filename(const std::string& directory) {
 }
 
 void SendParametersToStream() {
-    std::cout << "Parameters:"                                  << std::endl;
-    std::cout << "XPOSMIN: "            << XPOSMIN              << std::endl;
-    std::cout << "XPOSMAX: "            << XPOSMAX              << std::endl;
-    std::cout << "XSPEED: "             << XSPEED               << std::endl;
-    std::cout << "A_MODE_OFFSETMIN: "   << A_MODE_OFFSETMIN     << std::endl;
-    std::cout << "A_MODE_OFFSETMAX: "   << A_MODE_OFFSETMAX     << std::endl;
-    std::cout << "A_MODE_AUTOGAIN: "    << A_MODE_AUTOGAIN      << std::endl;
-    std::cout << "A_MODE_MANUALGAIN: "  << A_MODE_MANUALGAIN    << std::endl;
-    std::cout << "A_MODE_GAINRATE: "    << A_MODE_GAINRATE      << std::endl;
-    std::cout << "A_MODE_FILTERTYPE: "  << A_MODE_FILTERTYPE    << std::endl;
-    std::cout << "M_MODE_SCANTIME: "    << M_MODE_SCANTIME      << std::endl;
-    std::cout << "DOPPLER_OFFSETMIN: "  << DOPPLER_OFFSETMIN    << std::endl;
-    std::cout << "DOPPLER_OFFSETMAX: "  << DOPPLER_OFFSETMAX    << std::endl;
-    std::cout << "DOPPLER_AUTOGAIN: "   << DOPPLER_AUTOGAIN     << std::endl;
-    std::cout << "DOPPLER_MANUALGAIN: " << DOPPLER_MANUALGAIN   << std::endl;
-    std::cout << "DOPPLER_FILTERTYPE: " << DOPPLER_FILTERTYPE   << std::endl;
-    std::cout << "A-MODE PORT: "        << A_MODE_PORT          << std::endl;
-    std::cout << "DOPPLER PORT: "       << DOPPLER_PORT         << std::endl;
-    std::cout << "A-MODE TXPAT: "       << A_MODE_TXPAT         << std::endl;
-    std::cout << "DOPPLER TXPAT: "      << DOPPLER_TXPAT        << std::endl;
-    std::cout << "DOPPLER ANGLE: "      << DOPPLER_ANGLE        << std::endl;
-    std::cout << "MODE: "               << MODE                 << std::endl;
-    std::cout << "A-MODE SCANLINES: "   << A_MODE_SCANLINES     << std::endl;
-    std::cout << "DOPPLER SCANLINES: "  << DOPPLER_SCANLINES    << std::endl;
-    std::cout << "COMMENT: "            << COMMENT              << std::endl;
-    std::cout << "IS CONFIGURED: "      << IS_CONFIGURED        << std::endl;
+    std::cout << "Parameters:" << std::endl;
+    for (const auto& pair : parameters) {
+        const auto& key = pair.first;
+        const auto& value = pair.second;
+        std::cout << key << ": " << value << std::endl;
+    }
 };
 
 void GetParameters(int argc, char* argv[]) {
 	
-    int i = 1;
-    
-    // Override defaults with command-line arguments
-    if (argc > 24) {
-        XPOSMIN              = std::string(argv[i++]);
-        XPOSMAX              = std::string(argv[i++]);
-        XSPEED               = std::string(argv[i++]);
-        A_MODE_OFFSETMIN     = std::string(argv[i++]);
-        A_MODE_OFFSETMAX     = std::string(argv[i++]);
-        A_MODE_AUTOGAIN      = std::string(argv[i++]);
-        A_MODE_MANUALGAIN    = std::string(argv[i++]);
-        A_MODE_GAINRATE      = std::string(argv[i++]);
-        A_MODE_FILTERTYPE    = std::string(argv[i++]);
-        M_MODE_SCANTIME      = std::string(argv[i++]);
-        DOPPLER_OFFSETMIN    = std::string(argv[i++]);
-        DOPPLER_OFFSETMAX    = std::string(argv[i++]);
-        DOPPLER_AUTOGAIN     = std::string(argv[i++]);
-        DOPPLER_MANUALGAIN   = std::string(argv[i++]);
-        DOPPLER_FILTERTYPE   = std::string(argv[i++]);
-        A_MODE_PORT          = std::string(argv[i++]);
-        DOPPLER_PORT         = std::string(argv[i++]);
-        A_MODE_TXPAT         = std::string(argv[i++]);
-        DOPPLER_TXPAT        = std::string(argv[i++]);
-        DOPPLER_ANGLE        = std::string(argv[i++]);
-        MODE                 = std::string(argv[i++]);
-        A_MODE_SCANLINES     = std::string(argv[i++]);
-        DOPPLER_SCANLINES    = std::string(argv[i++]);
-        COMMENT              = std::string(argv[i++]);
-        IS_CONFIGURED        = std::string(argv[i++]);
+    // Predefined key order
+    std::vector<std::string> keyOrder = {
+        "XPOSMIN", "XPOSMAX", "XSPEED", "A_MODE_OFFSETMIN", "A_MODE_OFFSETMAX", 
+        "A_MODE_AUTOGAIN", "A_MODE_MANUALGAIN", "A_MODE_GAINRATE", "A_MODE_FILTERTYPE", 
+        "M_MODE_SCANTIME", "DOPPLER_OFFSETMIN", "DOPPLER_OFFSETMAX", "DOPPLER_AUTOGAIN", 
+        "DOPPLER_MANUALGAIN", "DOPPLER_FILTERTYPE", "A_MODE_PORT", "DOPPLER_PORT", 
+        "A_MODE_TXPAT", "DOPPLER_TXPAT", "DOPPLER_ANGLE", "MODE", 
+        "A_MODE_SCANLINES", "DOPPLER_SCANLINES", "COMMENT", "IS_CONFIGURED"
     };
+
+    for (size_t i = 0; i < keyOrder.size() && i < static_cast<size_t>(argc) - 1; ++i) {
+        const std::string& key = keyOrder[i]; 
+        parameters[key] = std::string(argv[i + 1]); 
+    }
 
     // Lookup strings in the table
-    if (compareStrings(MODE,"A-MODE") || compareStrings(MODE,"M-MODE")) {
+    if (compareStrings(parameters["MODE"], "A-MODE") || compareStrings(parameters["MODE"], "M-MODE")) {
         printf("A-MODE / M-MODE\n");
         IsDopplerMode = false;
-        short int lookupResult = lookupString(A_MODE_TXPAT, translationTable);
+        short int lookupResult = lookupString(parameters["A_MODE_TXPAT"], translationTable);
         txpat = lookupResult | BSCAN; // set lowest bit to signal B scan mode to the fpga
-        lines = stringToInt(A_MODE_SCANLINES);
-        offsetmin = stringToInt(A_MODE_OFFSETMIN);
-        offsetmax = stringToInt(A_MODE_OFFSETMAX);
-        filsel = lookupString(A_MODE_FILTERTYPE, translationTable);
-        manualgain = stringToInt(A_MODE_MANUALGAIN);
-        gainrate = stringToInt(A_MODE_GAINRATE);
+        lines = stringToInt(parameters["A_MODE_SCANLINES"]);
+        offsetmin = stringToInt(parameters["A_MODE_OFFSETMIN"]);
+        offsetmax = stringToInt(parameters["A_MODE_OFFSETMAX"]);
+        filsel = lookupString(parameters["A_MODE_FILTERTYPE"], translationTable);
+        manualgain = stringToInt(parameters["A_MODE_MANUALGAIN"]);
+        gainrate = stringToInt(parameters["A_MODE_GAINRATE"]);
     };
 
-    if (compareStrings(MODE,"DOPPLER")) {
+    if (compareStrings(parameters["MODE"], "DOPPLER")) {
         printf("DOPPLER\n");
         IsDopplerMode = true;
-        short int lookupResult = lookupString(DOPPLER_TXPAT, translationTable);
+        short int lookupResult = lookupString(parameters["DOPPLER_TXPAT"], translationTable);
         txpat = lookupResult; // |DOPPL, but DOPPLER is 0 so no need to change lowest bit.
-        lines = stringToInt(DOPPLER_SCANLINES);
-        offsetmin = stringToInt(DOPPLER_OFFSETMIN);
-        offsetmax = stringToInt(DOPPLER_OFFSETMAX);
-        filsel = lookupString(DOPPLER_FILTERTYPE, translationTable);
-        manualgain = stringToInt(DOPPLER_MANUALGAIN);
-        angle = stringToInt(DOPPLER_ANGLE);
+        lines = stringToInt(parameters["DOPPLER_SCANLINES"]);
+        offsetmin = stringToInt(parameters["DOPPLER_OFFSETMIN"]);
+        offsetmax = stringToInt(parameters["DOPPLER_OFFSETMAX"]);
+        filsel = lookupString(parameters["DOPPLER_FILTERTYPE"], translationTable);
+        manualgain = stringToInt(parameters["DOPPLER_MANUALGAIN"]);
+        angle = stringToInt(parameters["DOPPLER_ANGLE"]);
     };
 
-    xposmin   = stringToFloat(XPOSMIN);
-    xposmax   = stringToFloat(XPOSMAX);
-    xspeed    = stringToFloat(XSPEED);
-    scanning_time = stringToFloat(M_MODE_SCANTIME);
-    configured = stringToBool(IS_CONFIGURED);
+    xposmin   = stringToFloat(parameters["XPOSMIN"]);
+    xposmax   = stringToFloat(parameters["XPOSMAX"]);
+    xspeed    = stringToFloat(parameters["XSPEED"]);
+    scanning_time = stringToFloat(parameters["M_MODE_SCANTIME"]);
+    configured = stringToBool(parameters["IS_CONFIGURED"]);
 };
 
 int saveParameters(int argc, char* argv[]){
-	
+
+    // Read default values 
+    parameters = loadDefaultParams(default_param_path);
+
     // Read incoming parameters
-    GetParameters(argc, argv);
+    GetParameters(argc, argv);    
 
     // Ensure the data directory exists
     std::string directory = FILES_DIRECTORY;

@@ -8,7 +8,7 @@ from scipy.signal import hilbert, butter, filtfilt, correlate, detrend
 BMH = 250
 BMW = 250
 NCIRCLES = 10
-# Bandpass filter function
+
 def bandpass_filter(_data, _lowcut, _highcut, _fs, _order=4):
     nyquist = 0.5 * _fs
     low = _lowcut / nyquist
@@ -35,8 +35,6 @@ def linear_remap(_image, _input_min, _input_max):
 # Define the filter parameters
 fs = 60e6  # Sampling frequency: 60 MHz
 
-#ok filter
-
 pulse_estimate = [ 191.88044306, 101.13246905,  -31.99125607, -125.13920687, -120.15156195, \
                    -23.58481095,   98.66428005,  166.59694768,  136.93185179,   26.74466111, \
                    -99.5099067,  -166.94983779, -130.9845268,    -4.09250074,  144.78855588, \
@@ -45,8 +43,9 @@ pulse_estimate = [ 191.88044306, 101.13246905,  -31.99125607, -125.13920687, -12
                    -15.19937815,  -56.41633166,  -14.28623576,   52.00505903,   63.34806533, \
                     -2.29865019,  -87.60648695, -108.7888121,   -35.77163949,   73.57575599, \
                    117.88614223,   38.61021823, -125.59411997, -263.43376617, -275.38307592]
+
 # Load the test file
-test_file = './data/log0582.csv'
+test_file = r'd:\RAPID_TEST_SERIES\2024-10-01\log1064.csv'
 data = pd.read_csv(test_file)
 xpos = data['XPOS'].values
 signals = data.iloc[:, 5:].values
@@ -63,6 +62,7 @@ input_min, input_max = 1200000, 10000000
 remapped_image = linear_remap(envelope_signals, input_min, input_max)
 filtered_image = median_filter(remapped_image, size=3)  # Adjust size for more or less filtering
 '''
+
 #not pretty (smeared) but good for finding stuff
 lowcut = 4.4e6  # Lower bound of the bandpass filter
 highcut = 5.5e6  # Upper bound of the bandpass filter
@@ -72,8 +72,6 @@ envelope_signals = np.abs(hilbert(enhanced_signals, axis=1))
 input_min, input_max = 70000, 700000
 remapped_image = linear_remap(envelope_signals, input_min, input_max)
 filtered_image = median_filter(remapped_image, size = 10)  # Adjust size for more or less filtering
-
-
 
 depth = np.linspace(0, 51.385, remapped_image.shape[1])
 

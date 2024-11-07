@@ -7,64 +7,32 @@
 #include <unistd.h>
 #include <string.h>
 #include "parameters.h"
+#include "json.hpp"
 
-// Default values
-const std::string XPOSMIN_DEF            =            "0.0";
-const std::string XPOSMAX_DEF            =           "51.0";
-const std::string XSPEED_DEF             =            "8.0";
-const std::string A_MODE_OFFSETMIN_DEF   =              "0";
-const std::string A_MODE_OFFSETMAX_DEF   =              "2";
-const std::string A_MODE_AUTOGAIN_DEF    =          " true";
-const std::string A_MODE_MANUALGAIN_DEF  =           " 700";
-const std::string A_MODE_GAINRATE_DEF    =            "105"; //105 For 10 MHz probe  //90 for 5 MHz probe
-const std::string A_MODE_FILTERTYPE_DEF  =            "BPF";
-const std::string M_MODE_SCANTIME_DEF    =           "3000";    // 3000 ms = 3 s
-const std::string DOPPLER_OFFSETMIN_DEF  =              "5";
-const std::string DOPPLER_OFFSETMAX_DEF  =             "50";
-const std::string DOPPLER_AUTOGAIN_DEF   =          "false";
-const std::string DOPPLER_MANUALGAIN_DEF =           "1023";
-const std::string DOPPLER_FILTERTYPE_DEF =            "HPF";
-const std::string DOPPLER_SCANLINES_DEF  =              "4";
-const std::string A_MODE_PORT_DEF        =             "X1";
-const std::string DOPPLER_PORT_DEF       =             "X3";
-const std::string DOPPLER_ANGLE_DEF      =              "0";
-const std::string MODE_DEF               =         "A-MODE"; //"DOPPLER" | "A-MODE" | "NEEDLE"
-const std::string A_MODE_SCANLINES_DEF   =              "1";
-const std::string A_MODE_TXPAT_DEF       = "10 MHz 4 Pulses";
-const std::string DOPPLER_TXPAT_DEF      = "4 MHz 8 Pulses";
-const std::string COMMENT_DEF	           =    "No comments";
-const std::string IS_CONFIGURED_DEF      =              "0";  // 0: not configured  | 1: configured
+std::string default_param_path = "rover/app/lib_gui/default_parameters.json";
 
+std::unordered_map<std::string, std::string> loadDefaultParams(const std::string& filename) {
+    std::unordered_map<std::string, std::string> params;
+    
+    // Open the JSON file
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open JSON file: " + filename);
+    }
+    
+    // Parse the JSON file
+    nlohmann::json jsonData;
+    file >> jsonData;
 
-std::string XPOSMIN                      = XPOSMIN_DEF;
-std::string XPOSMAX                      = XPOSMAX_DEF;
-std::string XSPEED                       = XSPEED_DEF;
+    // Iterate over the JSON data and populate the map
+    for (auto& [key, value] : jsonData.items()) {
+        params[key] = value.dump();  // Store values as strings
+    }
 
-std::string A_MODE_OFFSETMIN             = A_MODE_OFFSETMIN_DEF;
-std::string A_MODE_OFFSETMAX             = A_MODE_OFFSETMAX_DEF;
-std::string A_MODE_AUTOGAIN              = A_MODE_AUTOGAIN_DEF;
-std::string A_MODE_MANUALGAIN            = A_MODE_MANUALGAIN_DEF;
-std::string A_MODE_GAINRATE              = A_MODE_GAINRATE_DEF;
-std::string A_MODE_FILTERTYPE            = A_MODE_FILTERTYPE_DEF;
+    return params; // Return the populated map
+}
 
-std::string M_MODE_SCANTIME              = M_MODE_SCANTIME_DEF;
-
-std::string DOPPLER_OFFSETMIN            = DOPPLER_OFFSETMIN_DEF;
-std::string DOPPLER_OFFSETMAX            = DOPPLER_OFFSETMAX_DEF;
-std::string DOPPLER_AUTOGAIN             = DOPPLER_AUTOGAIN_DEF;
-std::string DOPPLER_MANUALGAIN           = DOPPLER_MANUALGAIN_DEF;
-std::string DOPPLER_FILTERTYPE           = DOPPLER_FILTERTYPE_DEF;
-
-std::string A_MODE_PORT                  = A_MODE_PORT_DEF;
-std::string DOPPLER_PORT                 = DOPPLER_PORT_DEF;
-std::string A_MODE_TXPAT                 = A_MODE_TXPAT_DEF;
-std::string DOPPLER_TXPAT                = DOPPLER_TXPAT_DEF;
-std::string DOPPLER_ANGLE                = DOPPLER_ANGLE_DEF;
-std::string MODE                         = MODE_DEF;
-std::string A_MODE_SCANLINES             = A_MODE_SCANLINES_DEF;
-std::string DOPPLER_SCANLINES            = DOPPLER_SCANLINES_DEF;
-std::string COMMENT                      = COMMENT_DEF;
-std::string IS_CONFIGURED                = IS_CONFIGURED_DEF;
+std::unordered_map<std::string, std::string> parameters;
 
 // The amount the DAC controlling the VGA get dec each adjustment to compensate for tissue attenuation
 #define TISSUE10M 104;
@@ -78,8 +46,8 @@ int offsetmin   =     5;
 int offsetmax   =    42;
 int angle       =    45;
 int manualgain  =   400;
-float xposmin   =   0.0; //mm
-float xposmax   = 520.0; //1/10 mm
+float xposmin   =   5.0; //mm
+float xposmax   = 50.0; //1/10 mm
 float xspeed     = 8.0;   // 8 mm/s
 int filsel = 0;
 int scanning_time = 3000;   // M-mode scanning (ms)

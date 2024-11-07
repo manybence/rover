@@ -11,11 +11,13 @@ from nicegui import app, ui
 import json
 from lib_gui import file_handling as fh
 from lib_gui import m_mode_detection as md
+from lib_gui import b_mode_detection as bd
+from lib_gui import signal_processing as proc
 import psutil
 
 
 # Define the directory containing the files
-FILES_DIRECTORY = '/home/rapid/projects/rover/app/data/'
+FILES_DIRECTORY = '/home/rapid/projects/rover/log/'
 executable_path = '/home/rapid/projects/rover/app/main'
 default_path = '/home/rapid/projects/rover/app/lib_gui/default_parameters.json'
 match_template_path = "/home/rapid/projects/rover/app/lib_gui/match_filter/template_5_MHz.csv"
@@ -49,20 +51,12 @@ def find_latest_data(directory):
     latest_file = sorted(files)[-1]
     return latest_file
         
-def process_image():
+def process_b_mode_image():
     try:
-        data_range = 4003
         file_path = find_latest_data(FILES_DIRECTORY)
-        print("Processing image: ", file_path)
-        df = pd.read_csv(file_path)
-        data_columns = [f'D[{i}]' for i in range(data_range)]
-        data = df[data_columns].values
-        envelopes = np.abs(signal.hilbert(data, axis=1))
-        log_envelopes = np.log1p(envelopes)  # Use log1p to avoid log(0)
-        normalized_envelopes = 255 * (log_envelopes - np.min(log_envelopes)) / (np.max(log_envelopes) - np.min(log_envelopes))
-        bitmap = normalized_envelopes.astype(np.uint8)
-        plt.imshow(bitmap.T, cmap='gray', aspect='auto')
-        plt.axis('off') 
+        print("Processing B-mode image: ", file_path)
+
+        bd.b_mode_imaging(file_path)
         plt.savefig(file_path.replace('.csv', '.png').replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
         plt.close()
     except Exception as e:
