@@ -79,3 +79,4 @@ def available_files():
                         return FileResponse(file_path, filename=file_name)
                     else:
                         return ui.label('File not found'), 404
+

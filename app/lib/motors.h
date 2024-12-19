@@ -19,9 +19,7 @@ std::vector<int> timeSeries;
 std::vector<int> positionSeries;
 
 bool IsMotorZeroed() {
-    pack_command('o', 0);   // Send command to read log
-    
-    // Read log bytes
+    pack_command('o', 0);   // Check if the motor has been zeroed since start up
     std::string receivedData = readResponse();
     return stringToBool(receivedData);
 }

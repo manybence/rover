@@ -18,6 +18,15 @@ int main(int argc, char* argv[]) {
     // Assign interrupt handlers
     signal(SIGINT, signalHandler);
     signal(SIGTERM, signalHandler);
+
+    // Reset mode
+    if (compareStrings(parameters["MODE"], "RESET")) {
+        InitMotorCommunication();
+        InitHW(false);
+        InitMotorPosition();
+        release_HW();
+        return 0;
+    }
     
     // Initialize motor
     InitMotorCommunication();

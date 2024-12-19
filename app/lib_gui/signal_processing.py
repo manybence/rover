@@ -98,8 +98,14 @@ def display(image, time, title):
     plt.ylabel("Depth (mm)")
 
 def display_full_scan(image, positions, title):
+    intensity_max = 0.02
     fig = plt.figure()
-    plt.imshow(image, extent=(min(positions), max(positions), image.shape[0] * 1000 * wave_velocity / sampling_freq, 0), aspect='auto', cmap='gray')    
+    plt.imshow(image, 
+               extent=(min(positions), max(positions), image.shape[0] * 1000 * wave_velocity / sampling_freq, 0), 
+               aspect='auto', 
+               cmap='gray',
+               vmin=0,
+               vmax=intensity_max)    
     plt.title(title)
     plt.xlabel("XPOS (mm)")
     plt.ylabel("Depth (mm)")
@@ -145,13 +151,12 @@ def measure_energy(signal):
     # Take only the positive half of the FFT (real signal)
     positive_freqs = freqs[:len(freqs)//2]
     positive_fft = np.abs(signal_fft[:len(signal_fft)//2])
-    
     indices = np.where((positive_freqs >= lower_bound) & (positive_freqs <= upper_bound))
     
+    # Measure energy component
     extracted_fft = positive_fft[indices]
-    extracted_freqs = positive_freqs[indices]
-    
-    energy = sum(value ** 2 for value in extracted_fft)
+    extracted_fft_norm = extracted_fft / len(signal)        # Normalize amplitude to make energy independent of signal length
+    energy = sum(value ** 2 for value in extracted_fft_norm)
     
     return energy
 

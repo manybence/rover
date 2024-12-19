@@ -60,17 +60,19 @@ void GetParameters(int argc, char* argv[]) {
     }
 
     // Lookup strings in the table
-    if (compareStrings(parameters["MODE"], "A-MODE") || compareStrings(parameters["MODE"], "M-MODE")) {
-        printf("A-MODE / M-MODE\n");
-        IsDopplerMode = false;
-        short int lookupResult = lookupString(parameters["A_MODE_TXPAT"], translationTable);
-        txpat = lookupResult | BSCAN; // set lowest bit to signal B scan mode to the fpga
-        lines = stringToInt(parameters["A_MODE_SCANLINES"]);
-        offsetmin = stringToInt(parameters["A_MODE_OFFSETMIN"]);
-        offsetmax = stringToInt(parameters["A_MODE_OFFSETMAX"]);
-        filsel = lookupString(parameters["A_MODE_FILTERTYPE"], translationTable);
-        manualgain = stringToInt(parameters["A_MODE_MANUALGAIN"]);
-        gainrate = stringToInt(parameters["A_MODE_GAINRATE"]);
+    if (compareStrings(parameters["MODE"], "A-MODE") || 
+        compareStrings(parameters["MODE"], "M-MODE") || 
+        compareStrings(parameters["MODE"], "M-MODE FULL SCAN")) {
+            printf("A-MODE / M-MODE\n");
+            IsDopplerMode = false;
+            short int lookupResult = lookupString(parameters["A_MODE_TXPAT"], translationTable);
+            txpat = lookupResult | BSCAN; // set lowest bit to signal B scan mode to the fpga
+            lines = stringToInt(parameters["A_MODE_SCANLINES"]);
+            offsetmin = stringToInt(parameters["A_MODE_OFFSETMIN"]);
+            offsetmax = stringToInt(parameters["A_MODE_OFFSETMAX"]);
+            filsel = lookupString(parameters["A_MODE_FILTERTYPE"], translationTable);
+            manualgain = stringToInt(parameters["A_MODE_MANUALGAIN"]);
+            gainrate = stringToInt(parameters["A_MODE_GAINRATE"]);
     };
 
     if (compareStrings(parameters["MODE"], "DOPPLER")) {

@@ -18,9 +18,9 @@
 
 void resetFPGA(){
    gpioWrite(IO_RST, 1); // Causes a reset of the FPGA - refresh for a new cycle (automatic scan)
-   usleep(10);
+   usleep(30);
    gpioWrite(IO_RST, 0);
-   usleep(90);
+   usleep(100);
 }
 
 void fpga(char scantype, int gain, int hilo, int offset) {
@@ -33,8 +33,6 @@ void fpga(char scantype, int gain, int hilo, int offset) {
     txBuf[j++] = REG_MODE;          // Set MODE       0x6<<5 [MODE]
     txBuf[j++] = TXPAT2 | 0x01; //(scantype | 0x01); // even = DOPPL, odd = BSCAN choosing Doppler mode briefly to get DAC value set early
 
-    //printf("txBuf[1] : %2d\n", txBuf[1]);
-
     g = gain;
     s = g & 0xff;
     r = (g >> 8) & 0x03;
@@ -46,8 +44,7 @@ void fpga(char scantype, int gain, int hilo, int offset) {
     gpioWrite(IO_HILO, hilo);
 
     spiXfer(h, txBuf, rxBuf, j);
-    usleep(200);//10 should be enough - maby the HILO shift need more time
-    //usleep(20000);//10 should be enough - maby the HILO shift need more time
+    usleep(2000);//10 should be enough - maby the HILO shift need more time
 
     j = 0;
     txBuf[j++] = REG_MODE;      // Set MODE       0x6<<5 [MODE]

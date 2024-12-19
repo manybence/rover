@@ -125,8 +125,9 @@ def process_m_mode_scan():
             plt.close()
 
         # Plot energy distribution across scan area
-        title = f"Full M-mode scan at XPOS:"
+        title = f"Full M-mode scan"
         energy_map = np.array(list_of_energies).T
+        print("Max energy", np.max(energy_map))
         proc.display_full_scan(energy_map, positions, title)
         png_file_path = f"{name_match}_set.png"
         print("New scan image: ", png_file_path)

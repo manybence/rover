@@ -17,7 +17,7 @@ import warnings
 def m_mode_imaging(path, template):
 
     # Define pulsation threshold TODO: more specific number, reasoning
-    pulsation_threshold = 10
+    pulsation_threshold = 0.005
     
     time, frame_org, xpos = fh.load_m_image(path)
 

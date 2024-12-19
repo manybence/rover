@@ -52,8 +52,6 @@ def load_m_image(path):
 
     # Extract the data columns
     signals = df.iloc[:, 5:] 
-
-    print("Reading M-mode file done")
     
     return time_range, signals, xpos
 

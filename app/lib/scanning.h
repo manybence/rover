@@ -222,21 +222,21 @@ int processAMode() {
     auto then_us = std::chrono::duration_cast<std::chrono::microseconds>(then.time_since_epoch()).count();
     while (!stopFlag) {
         dataarray.clear();
-            fpga_scan();
-            auto now = std::chrono::high_resolution_clock::now();
-            auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count() - then_us;
-            if (expectedtime_us < microseconds) stopFlag = true;
+        fpga_scan();
+        auto now = std::chrono::high_resolution_clock::now();
+        auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count() - then_us;
+        if (expectedtime_us < microseconds) stopFlag = true;
 
-            // Read first sample twice (dummy stuff in spi buffer need to be discarded so a read from any addres would do)
-            read_fpga_line(A_MODE_READOUT_OFFSET);
+        // Read first sample twice (dummy stuff in spi buffer need to be discarded so a read from any addres would do)
+        read_fpga_line(A_MODE_READOUT_OFFSET);
 
-            // Read captured lines
-            for (i = 0; i < A_MODE_BUFLEN; i++) {
-                raw_input_data_A[i] = read_fpga_line(i + A_MODE_READOUT_OFFSET);
-            };
-            
-            // Buffer the data in RAM
-            dataBuffer.emplace_back(xpos, _hiloval, microseconds, _dacval, _offset, raw_input_data_A);
+        // Read captured lines
+        for (i = 0; i < A_MODE_BUFLEN; i++) {
+            raw_input_data_A[i] = read_fpga_line(i + A_MODE_READOUT_OFFSET);
+        };
+        
+        // Buffer the data in RAM
+        dataBuffer.emplace_back(xpos, _hiloval, microseconds, _dacval, _offset, raw_input_data_A);
     }
 
 	// Get position log
@@ -316,6 +316,7 @@ int processMFullScan() {
         std::cout << "Next target: " << xpos_target << std::endl;
         datfilename = update_filename(logfilename, counter);
         processMMode(xpos_target); // Perform M-mode scan
+        usleep(10000);
         counter++;
     }
 
