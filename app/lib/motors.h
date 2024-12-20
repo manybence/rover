@@ -15,6 +15,8 @@
 #include "serial_comm.h"
 #include "base64.h"
 
+static const std::string driver_version = "1424753163";    // CRC of the motor driver. Update when driver firmware is updated.
+
 std::vector<int> timeSeries;
 std::vector<int> positionSeries;
 
@@ -22,6 +24,26 @@ bool IsMotorZeroed() {
     pack_command('o', 0);   // Check if the motor has been zeroed since start up
     std::string receivedData = readResponse();
     return stringToBool(receivedData);
+}
+
+void CheckMotorDate() {
+    pack_command('D', 0);   // Check the motor driver's build date
+    std::string build_date = readResponse();
+    std::cout << "Motor driver's build date: " << build_date << std::endl;
+}
+
+bool CheckMotorVersion() {
+    pack_command('v', 0);   // Check the motor driver's version number
+    std::string version = trim(readResponse());
+    bool valid = compareStrings(version, driver_version);
+    if (!valid) {
+        std::cout << "CRC ERROR! Invalid motor driver!" << std::endl;
+        std::cout << "Expected version: " << driver_version << std::endl;
+        std::cout << "Current version: " << version << std::endl;
+        CheckMotorDate();
+    }
+    else {std::cout << "CRC check passed." << std::endl;}
+    return valid;
 }
 
 void MoveMotorToPosition(float xpos) {

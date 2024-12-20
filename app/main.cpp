@@ -19,9 +19,12 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, signalHandler);
     signal(SIGTERM, signalHandler);
 
+    // Initialize motor driver communication channel, check firmware version number
+    InitMotorCommunication();
+    if (!CheckMotorVersion()) {return 0;}
+
     // Reset mode
     if (compareStrings(parameters["MODE"], "RESET")) {
-        InitMotorCommunication();
         InitHW(false);
         InitMotorPosition();
         release_HW();
@@ -29,14 +32,13 @@ int main(int argc, char* argv[]) {
     }
     
     // Initialize motor
-    InitMotorCommunication();
     configured = IsMotorZeroed();
     if (!configured) {InitMotorPosition();}
+    MotorSpeed(xspeed); // [mm/s] 
 
-    // Initialize hardware
+    // Initialize electronics
 	printf("Initialisation of HW\n");
     InitHW(configured);
-    MotorSpeed(xspeed); // [mm/s] 
     
     // Start scanning process
     if (compareStrings(parameters["MODE"], "DOPPLER")) {
