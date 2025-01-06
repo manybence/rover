@@ -1,5 +1,0 @@
-TODO:
-- Windows - Linux problems?
-- Dedicated command compiler?
-- Timer better resolution (maybe hw processor reading directly)
-

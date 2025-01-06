@@ -28,6 +28,7 @@ home/rapid/projects/app
 4. Open Programming/Thonny to access the Python code for the web GUI. 
 5. Run the script to start the GUI.
 6. Open the browser and search for rapidunit[number]:8080 to access the GUI.
+7. Recompile the C code by running build_2.sh
 
 -----------------------------------------------------------------------------------
 In case you want to modify the firmware that is responsible for the ultrasound scanning process and drives the motors:
