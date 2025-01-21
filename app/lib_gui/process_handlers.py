@@ -81,7 +81,10 @@ def process_b_mode_image():
         if file_path:
             print("Processing B-mode image: ", file_path)
 
-            bd.b_mode_imaging(file_path)
+            # Load matched filter template
+            template = fh.load_match_template(match_template_path)
+
+            bd.b_mode_imaging(file_path, template)
             plt.savefig(file_path.replace('.csv', '.png').replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
             plt.close()
         else:

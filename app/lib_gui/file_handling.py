@@ -39,6 +39,19 @@ def save_results(path, results):
         writer.writerow(line)
     f.close()
 
+def load_b_image(path):
+
+    #Load M-mode ultrasound scan picture from csv file
+    df = pd.read_csv(path)
+
+    # Extract the XPOS column
+    xpos = df.iloc[:, 0]
+
+    # Extract the data columns
+    signals = df.iloc[:, 5:] 
+    
+    return signals, xpos
+
 def load_m_image(path):
     
     #Load M-mode ultrasound scan picture from csv file

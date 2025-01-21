@@ -72,23 +72,6 @@ def m_mode_imaging(path, template):
 
     return energy, freq
 
-if __name__ == "__main__":
-
-    #Setting the font size
-    plt.rcParams.update({'font.size': 22})
-
-    #Matched filter template path
-    path_template = "match_filter/template_5_MHz.csv"
-
-    pulsation_threshold = 10
-            
-    # Load matched filter template
-    template = fh.load_match_template(path_template)
-
-    # Loading the M-mode scan
-    path = fh.find_file()
-
-    m_mode_imaging(path, template)
 
     
     

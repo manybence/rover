@@ -99,6 +99,14 @@ def display(image, time, title):
     plt.xlabel("Time (s)")
     plt.ylabel("Depth (mm)")
 
+def display_b_mode(image, xpos, title):
+
+    fig = plt.figure()
+    plt.imshow(image, extent=(min(xpos), max(xpos), image.shape[0] * 1000 * wave_velocity / sampling_freq / 2, 0), aspect='auto', cmap='gray')    
+    plt.title(title)
+    plt.xlabel("XPOS (mm)")
+    plt.ylabel("Depth (mm)")
+
 def display_full_scan(image, positions, title):
     intensity_max = 0.02
     fig = plt.figure()
