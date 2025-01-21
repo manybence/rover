@@ -167,7 +167,8 @@ with ui.row().style('width: 100%; display: flex; flex-wrap: wrap;'):
             ui.button('RESET MOTOR', on_click=reset_motor).style('width: 25%;')
             ui.button('RESET DEFAULT PARAMETERS', on_click=reset_default).style('width: 25%;')
             MODE_input = ui.select(
-                ['A-MODE', 'DOPPLER', 'M-MODE', "M-MODE FULL SCAN", 'NEEDLE'], 
+                ['A-MODE', 'DOPPLER', 'M-MODE', 'NEEDLE'],
+                # ['A-MODE', 'DOPPLER', 'M-MODE', "M-MODE FULL SCAN", 'NEEDLE'], 
                 label='MODE OF OPERATION', 
                 value=current_values['MODE'],
                 on_change = lambda e: on_mode_change(e.value)).style('width: 33%;')

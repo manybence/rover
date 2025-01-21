@@ -48,10 +48,6 @@ def b_mode_imaging(path):
     input_min, input_max = 70000, 700000
     remapped_image = proc.linear_remap(envelope_signals, input_min, input_max)
     filtered_image = median_filter(remapped_image, size = 10) 
-    
-    # Noise detection
-    #if (proc.detect_noise(filtered_image)):
-    #  warnings.warn("M-mode image is corrupted. Check for gain and filtering settings!")
 
     depth = np.linspace(0, 51.385, remapped_image.shape[1])
 

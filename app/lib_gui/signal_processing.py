@@ -12,13 +12,13 @@ Library for common processing functions for B-mode and M-mode detection
 
 import numpy as np
 from scipy import signal
-from scipy.signal import hilbert, correlate
+from scipy.signal import hilbert, correlate, detrend
 import matplotlib.pyplot as plt
 
 sampling_freq = 60e6
 wave_velocity = 1480
 max_depth_mm = 40  # maximum depth in mm
-max_depth_sample = int(max_depth_mm * sampling_freq / wave_velocity / 1000)
+max_depth_sample = int(max_depth_mm * 2 * sampling_freq / wave_velocity / 1000)
 
 def segmentate_image(image, distance_range):
     
@@ -37,9 +37,15 @@ def segmentate_image(image, distance_range):
     
     return segmented_image
 
-def bandpass_filtering(series, cutoff_low, cutoff_high, order=5, fs=60e6):   
+def log_mapping(image):
+    c = 255 / np.log(1 + np.max(image))
+    log_image = c * (np.log(image + 1))
+    return log_image
+
+def signal_filtering(series, cutoff_low, cutoff_high, fs=60e6):   
     
     #Defining the filter values
+    order = 4 
     nyq = 0.5 * fs
     normal_cutoff_low = cutoff_low / nyq
     normal_cutoff_high = cutoff_high / nyq
@@ -49,11 +55,6 @@ def bandpass_filtering(series, cutoff_low, cutoff_high, order=5, fs=60e6):
     filtered_signal = signal.filtfilt(b, a, series)
     
     return filtered_signal
-
-def log_mapping(image):
-    c = 255 / np.log(1 + np.max(image))
-    log_image = c * (np.log(image + 1))
-    return log_image
 
 def apply_matched_filter(_signals, _pulse_estimate):
     matched_filter = _pulse_estimate[::-1]
@@ -65,18 +66,19 @@ def preprocess_image(image, template):
     signals = []
     for index, row in image.iterrows():
         signal_raw = np.array(row.values)[:max_depth_sample]
-        filtered_signal = bandpass_filtering(signal_raw, cutoff_low = 4.7e6, cutoff_high = 5.8e6)  #Applying band-pass filter
+        detrended_signal = detrend(signal_raw)
+        filtered_signal = signal_filtering(detrended_signal, cutoff_low = 1e6, cutoff_high = 11.5e6)  #Applying band-pass filter
         matched = signal.lfilter(template, 1, filtered_signal)  #Apply match filter
         envelopes = np.abs(hilbert(matched))   #Hilbert-transformation
         signals.append(envelopes)
-
-    normalized = normalize_image(signals)
-    # log_envelopes = np.log1p(signals)
-    # normalized_envelopes = 255 * (log_envelopes - np.min(log_envelopes)) / (np.max(log_envelopes) - np.min(log_envelopes))
-    # bitmap = normalized_envelopes
+    
+    horizontal = np.array(signals).T
+    
+    #Normalizing image
+    normalized = normalize_image(horizontal)
     bitmap = np.array(normalized)
     
-    return bitmap.T
+    return bitmap
 
 def normalize_image(image):
     all_values = [value for sublist in image for value in sublist]
@@ -92,7 +94,7 @@ def display(image, time, title):
 
     fig = plt.figure()
     time_in_seconds = [t / 1000000.0 for t in time]
-    plt.imshow(image, extent=(min(time_in_seconds), max(time_in_seconds), image.shape[0] * 1000 * wave_velocity / sampling_freq, 0), aspect='auto', cmap='gray')    
+    plt.imshow(image, extent=(min(time_in_seconds), max(time_in_seconds), image.shape[0] * 1000 * wave_velocity / sampling_freq / 2, 0), aspect='auto', cmap='gray')    
     plt.title(title)
     plt.xlabel("Time (s)")
     plt.ylabel("Depth (mm)")
@@ -101,7 +103,7 @@ def display_full_scan(image, positions, title):
     intensity_max = 0.02
     fig = plt.figure()
     plt.imshow(image, 
-               extent=(min(positions), max(positions), image.shape[0] * 1000 * wave_velocity / sampling_freq, 0), 
+               extent=(min(positions), max(positions), image.shape[0] * 1000 * wave_velocity / sampling_freq / 2, 0), 
                aspect='auto', 
                cmap='gray',
                vmin=0,
@@ -153,12 +155,15 @@ def measure_energy(signal):
     positive_fft = np.abs(signal_fft[:len(signal_fft)//2])
     indices = np.where((positive_freqs >= lower_bound) & (positive_freqs <= upper_bound))
     
-    # Measure energy component
+    peak_index = np.argmax(positive_fft)
+    peak_frequency = positive_freqs[peak_index]
+    
+    # Measure the energy component in the given range
     extracted_fft = positive_fft[indices]
-    extracted_fft_norm = extracted_fft / len(signal)        # Normalize amplitude to make energy independent of signal length
+    extracted_fft_norm = extracted_fft / len(signal)        # Normalize amplitude to make independent of signal length
     energy = sum(value ** 2 for value in extracted_fft_norm)
     
-    return energy
+    return energy, peak_frequency
 
 def detect_noise(image, plot_histogram=False):
     

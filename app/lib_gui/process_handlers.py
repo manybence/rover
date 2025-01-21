@@ -78,11 +78,14 @@ def find_latest_data(directory):
 def process_b_mode_image():
     try:
         file_path = find_latest_data(FILES_DIRECTORY)
-        print("Processing B-mode image: ", file_path)
+        if file_path:
+            print("Processing B-mode image: ", file_path)
 
-        bd.b_mode_imaging(file_path)
-        plt.savefig(file_path.replace('.csv', '.png').replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
-        plt.close()
+            bd.b_mode_imaging(file_path)
+            plt.savefig(file_path.replace('.csv', '.png').replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
+            plt.close()
+        else:
+            print("B-mode data file not found.")
     except Exception as e:
         print(f"Error while processing image: {e}")
     
@@ -91,52 +94,57 @@ def process_m_mode_image():
     # Find latest image
     try:
         file_path = find_latest_data(FILES_DIRECTORY)
-        print("Processing M-mode image: ", file_path)
-               
-        # Load matched filter template
-        template = fh.load_match_template(match_template_path)
+        if file_path:
+            print("Processing M-mode image: ", file_path)
+                
+            # Load matched filter template
+            template = fh.load_match_template(match_template_path)
 
-        # Perform imaging
-        depth = md.m_mode_imaging(file_path, template)
-        plt.savefig(file_path.replace('.csv', '.png').replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
-        plt.close()
+            # Perform imaging
+            md.m_mode_imaging(file_path, template)
+            plt.savefig(file_path.replace('.csv', '.png').replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
+            plt.close()
+        else:
+            print("M-mode data file not found.")
     except Exception as e:
         print(f"Error while processing image: {e}")
 
 def process_m_mode_scan():
 
-    try:
-        # Find latest images
-        file_paths, name_match = find_latest_set_data(FILES_DIRECTORY)
+    #This feature is not yet available.
+    print("This feature is not yet available.")
 
-        # Load matched filter template
-        template = fh.load_match_template(match_template_path)
+    # try:
+    #     # Find latest images
+    #     file_paths, name_match = find_latest_set_data(FILES_DIRECTORY)
+
+    #     # Load matched filter template
+    #     template = fh.load_match_template(match_template_path)
         
-        # Process each image
-        list_of_energies = []
-        positions = []
-        for file_path in file_paths:
-            print("Processing M-mode image: ", file_path)
+    #     # Process each image
+    #     list_of_energies = []
+    #     positions = []
+    #     for file_path in file_paths:
+    #         print("Processing M-mode image: ", file_path)
 
-            # Perform imaging
-            depth, energies, xpos = md.m_mode_imaging(file_path, template)
-            list_of_energies.append(energies)
-            positions.append(xpos)
-            plt.savefig(file_path.replace('.csv', '.png').replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
-            plt.close()
+    #         # Perform imaging
+    #         energies, freq = md.m_mode_imaging(file_path, template)
+    #         list_of_energies.append(energies)
+    #         plt.savefig(file_path.replace('.csv', '.png').replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
+    #         plt.close()
 
-        # Plot energy distribution across scan area
-        title = f"Full M-mode scan"
-        energy_map = np.array(list_of_energies).T
-        print("Max energy", np.max(energy_map))
-        proc.display_full_scan(energy_map, positions, title)
-        png_file_path = f"{name_match}_set.png"
-        print("New scan image: ", png_file_path)
-        plt.savefig(png_file_path.replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
-        plt.close()
+    #     # Plot energy distribution across scan area
+    #     title = f"Full M-mode scan"
+    #     energy_map = np.array(list_of_energies).T
+    #     print("Max energy", np.max(energy_map))
+    #     proc.display_full_scan(energy_map, positions, title)
+    #     png_file_path = f"{name_match}_set.png"
+    #     print("New scan image: ", png_file_path)
+    #     plt.savefig(png_file_path.replace('//dat', '//pic'), format='png', bbox_inches='tight', pad_inches=0)
+    #     plt.close()
 
-    except Exception as e:
-        print(f"Error while processing image: {e}")
+    # except Exception as e:
+    #     print(f"Error while processing image: {e}")
     
 def run_cpp_program(current_values, is_configured):
     # Convert boolean AUTOGAIN to string 'true' or 'false'

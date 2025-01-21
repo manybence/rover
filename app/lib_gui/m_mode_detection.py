@@ -12,12 +12,23 @@ import matplotlib.pyplot as plt
 from lib_gui import signal_processing as proc
 from lib_gui import file_handling as fh
 import warnings
+import numpy as np
+from scipy.signal import convolve
 
-
+def classify_sample(energy, frequency):
+    
+    # Binary classification on a sample based on the evaluation criteria
+    energy_min = 0.9
+    energy_max = 25
+    freq_min = 0.7
+    freq_max = 1.5
+    
+    if energy_min < energy * 10e6 < energy_max and freq_min < frequency < freq_max:
+        return True
+    else: 
+        return False
+    
 def m_mode_imaging(path, template):
-
-    # Define pulsation threshold TODO: more specific number, reasoning
-    pulsation_threshold = 0.005
     
     time, frame_org, xpos = fh.load_m_image(path)
 
@@ -26,27 +37,40 @@ def m_mode_imaging(path, template):
     # if (proc.detect_noise(image_proc)):
     #     warnings.warn("M-mode image is corrupted. Check for gain and filtering settings!")
 
-    # Detect pulsation
-    energies = []
-    for segment in image_proc:    
-        energies.append(proc.measure_energy(segment))
+    # Measure absolute difference between A-lines
+    rotated = image_proc.T
+    diff = []
+    for t in range(1, len(rotated)):
+        diff.append(abs(rotated[t] - rotated[t-1]))
+    diff = np.array(diff).T
+    
+    # Threshold the differential image
+    threshold_high = 0.0
+    diff[diff < threshold_high] = 0
 
-    # Locate the artery
-    depth = -1
-    if max(energies) > pulsation_threshold:
-        depth = energies.index(max(energies)) * 1000 * proc.wave_velocity / proc.sampling_freq
-        
-    # Display M-mode image
-    notification = "No pulsation detected"
+    # Measure average difference across depth axis
+    vertical_averages = np.mean(diff, axis=0)
+    
+    # Processing the pulsation
+    window_size = 30
+    window = np.hanning(window_size)
+    window /= window.sum()  # Normalize the window
+    mean_centered_signal = vertical_averages - np.mean(vertical_averages) 
+    hann_filtered_signal = convolve(mean_centered_signal, window, mode='same')
+    
+    # Measure freqency and amplitude of pulsation
+    energy, freq = proc.measure_energy(hann_filtered_signal)
+    print(f"Measured energy: {round(energy*10e6, 2)}, Frequency: {round(freq, 2)} Hz")
+
+    # Display processed M-mode image
     proc.display(image_proc, time, f"M-mode at XPOS: {xpos} mm")
-    if depth > -1:
-        plt.axhline(y=depth, color='red', linestyle='--', linewidth=1)
-        notification = f"Pulsation detected at depth: {round(depth, 2)} mm"
 
-    title = f"M-mode at XPOS: {xpos} mm, "
-    plt.title(title + notification)
+    pulsation = classify_sample(energy, freq)
 
-    return depth, energies, xpos
+    title = f"M-mode at XPOS: {xpos} mm, pulsation: {pulsation}"
+    plt.title(title)
+
+    return energy, freq
 
 if __name__ == "__main__":
 
