@@ -16,12 +16,13 @@ from lib_gui import signal_processing as proc
 import psutil
 import re
 
+projectfolder = '/home/rapid/rover'
 
 # Define the directory containing the files
-FILES_DIRECTORY = '/home/rapid/projects/rover/log/'
-executable_path = '/home/rapid/projects/rover/app/main'
-default_path = '/home/rapid/projects/rover/app/lib_gui/default_parameters.json'
-match_template_path = "/home/rapid/projects/rover/app/lib_gui/match_filter/template_5_MHz.csv"
+FILES_DIRECTORY = os.path.join(projectfolder,'log/')
+executable_path = os.path.join(projectfolder,'app/main')
+default_path = os.path.join(projectfolder,'app/lib_gui/default_parameters.json')
+match_template_path = os.path.join(projectfolder,'app/lib_gui/match_filter/filter_5_MHz_1_pulse.csv')
 
 def read_default_values():
     

@@ -15,7 +15,7 @@
 #include "serial_comm.h"
 #include "base64.h"
 
-static const std::string driver_version = "1424753163";    // CRC of the motor driver. Update when driver firmware is updated.
+static const std::string driver_version = "3185662796";    // CRC of the motor driver. Update when driver firmware is updated.
 
 std::vector<int> timeSeries;
 std::vector<int> positionSeries;
@@ -32,18 +32,45 @@ void CheckMotorDate() {
     std::cout << "Motor driver's build date: " << build_date << std::endl;
 }
 
-bool CheckMotorVersion() {
-    pack_command('v', 0);   // Check the motor driver's version number
-    std::string version = trim(readResponse());
-    bool valid = compareStrings(version, driver_version);
-    if (!valid) {
-        std::cout << "CRC ERROR! Invalid motor driver!" << std::endl;
-        std::cout << "Expected version: " << driver_version << std::endl;
-        std::cout << "Current version: " << version << std::endl;
-        CheckMotorDate();
+bool CheckMotorVersion()
+{
+    const int MAX_RETRIES = 3;
+
+    for (int attempt = 1; attempt <= MAX_RETRIES; ++attempt)
+    {
+        // Send command to get motor driver version
+        pack_command('v', 0);  
+        
+        // Read and trim response
+        std::string version = trim(readResponse());
+        
+        // Compare with the expected driver version
+        bool valid = compareStrings(version, driver_version);
+
+        if (valid)
+        {
+            std::cout << "CRC check passed." << std::endl;
+            return true;  // If valid, return immediately
+        }
+        else
+        {
+            // Report error
+            std::cout << "CRC ERROR! Invalid motor driver!" << std::endl;
+            std::cout << "Expected version: " << driver_version << std::endl;
+            std::cout << "Current version: " << version << std::endl;
+            CheckMotorDate();
+
+            // If not the last attempt, wait and retry
+            if (attempt < MAX_RETRIES)
+            {
+                std::cout << "Retrying in 1 second..." << std::endl;
+                sleep(1);      
+            }
+        }
     }
-    else {std::cout << "CRC check passed." << std::endl;}
-    return valid;
+
+    // If we exhausted all attempts, return false
+    return false;
 }
 
 void MoveMotorToPosition(float xpos) {
@@ -155,10 +182,11 @@ void GetLog() {
     std::cout << "Reading Log" << std::endl;
     tcflush(fd, TCIOFLUSH); // Discard both input and output data
     pack_command('l', 0);   // Send command to read log
-    
+    usleep(100000);
     // Read log bytes
     std::string receivedData = readResponse();
     decodeLog(receivedData);
+    //std::cout << receivedData << std::endl;
 }
 
 void NeedleMotorPosition(float p) {

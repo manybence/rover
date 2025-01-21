@@ -12,7 +12,7 @@ configured = False
 # Close previous session if exists
 ph.release_port(8080)
 
-favicon_path = '/home/rapid/projects/rover/app/lib_gui/neurescue_logo_heart.png'
+favicon_path = 'lib_gui/neurescue_logo_heart.png'
 latest_image_path = ""
 
 if not os.path.exists(ph.FILES_DIRECTORY):
@@ -50,20 +50,20 @@ def update_parameters():
     # Update parameters
     for key in current_values.keys():
         component_name = f'{key}_input'
-
-        # Check if the component exists in the app's components
-        component = eval(component_name)
+        if (component_name != 'IS_CONFIGURED_input'):
+            # Check if the component exists in the app's components
+            component = eval(component_name)
         
-        if component and hasattr(component, 'value'):
-            try:
-                # Update the value in current_values
-                current_values[key] = component.value
-            except Exception as e:
-                # Log any exception if there's an issue setting the value
-                print(f"Error updating {key}: {e}")
-        else:
-            # If the component doesn't exist, log a warning
-            print(f"Component '{component_name}' not found.")
+            if component and hasattr(component, 'value'):
+                try:
+                    # Update the value in current_values
+                    current_values[key] = component.value
+                except Exception as e:
+                    # Log any exception if there's an issue setting the value
+                    print(f"Error updating {key}: {e}")
+            else:
+                # If the component doesn't exist, log a warning
+                print(f"Component '{component_name}' not found.")
 
     # Save updated values
     app.storage.general['current_values'] = current_values
@@ -196,7 +196,7 @@ with ui.row().style('width: 100%; display: flex; flex-wrap: wrap;'):
                         A_MODE_OFFSETMIN_input = ui.number(label='OFFSET MIN', value=current_values['A_MODE_OFFSETMIN']).style('width: 40%;')
                         A_MODE_OFFSETMAX_input = ui.number(label='OFFSET MAX', value=current_values['A_MODE_OFFSETMAX']).style('width: 40%;')
                         A_MODE_PORT_input = ui.select(['X1', 'X2', 'X3', 'X4'], label='PORT', value=current_values['A_MODE_PORT']).style('width: 40%;')
-                        A_MODE_TXPAT_input = ui.select(['10 MHz 4 Pulses','5 MHz 3 Pulses','4 MHz 2 Pulses','4 MHz 3 Pulses','2.5 MHz 5 Pulses','2 MHz 4 Pulses','Barker 7','Test Pulse'], label='TX PATTERN', value=current_values['A_MODE_TXPAT']).style('width: 40%;')
+                        A_MODE_TXPAT_input = ui.select(['10 MHz 4 Pulses','5 MHz 3 Pulses','4 MHz 2 Pulses','5 MHz 1 Pulse','2.5 MHz 5 Pulses','2 MHz 4 Pulses','10 MHz 1 Pulse','Test Pulse'], label='TX PATTERN', value=current_values['A_MODE_TXPAT']).style('width: 40%;')
                         A_MODE_GAINRATE_input = ui.number(label='GAINRATE', value=current_values['A_MODE_GAINRATE']).style('width: 40%;')
                         A_MODE_FILTERTYPE_input = ui.select(['BPF', 'HPF'], label='FILTERTYPE', value=current_values['A_MODE_FILTERTYPE']).style('width: 40%;')
                         A_MODE_SCANLINES_input = ui.number('SCANLINES', value=current_values['A_MODE_SCANLINES'], min=1, max=1000).style('width: 40%;')
@@ -219,7 +219,7 @@ with ui.row().style('width: 100%; display: flex; flex-wrap: wrap;'):
                         DOPPLER_OFFSETMIN_input = ui.number(label='OFFSET MIN', value=current_values['DOPPLER_OFFSETMIN']).style('width: 40%;')
                         DOPPLER_OFFSETMAX_input = ui.number(label='OFFSET MAX', value=current_values['DOPPLER_OFFSETMAX']).style('width: 40%;')
                         DOPPLER_PORT_input = ui.select(['X1', 'X2', 'X3', 'X4'], label='PORT', value=current_values['DOPPLER_PORT']).style('width: 40%;').style('width: 40%;')
-                        DOPPLER_TXPAT_input = ui.select(['10 MHz 4 Pulses','5 MHz 3 Pulses','4 MHz 8 Pulses','3.3 MHz 7 Pulses','2.5 MHz 5 Pulses','2 MHz 4 Pulses','Barker 13','Test Pulse'], label='TX PATTERN', value=current_values['DOPPLER_TXPAT']).style('width: 40%;')
+                        DOPPLER_TXPAT_input = ui.select(['10 MHz 4 Pulses','5 MHz 3 Pulses','4 MHz 2 Pulses','5 MHz 1 Pulse','2.5 MHz 5 Pulses','2 MHz 4 Pulses','10 MHz 1 Pulse','Test Pulse'], label='TX PATTERN', value=current_values['DOPPLER_TXPAT']).style('width: 40%;')
                         DOPPLER_ANGLE_input = ui.number(label='ANGLE (DEG)', value=current_values['DOPPLER_ANGLE']).style('width: 40%;')
                         DOPPLER_FILTERTYPE_input = ui.select(['BPF', 'HPF'], label='FILTERTYPE', value=current_values['DOPPLER_FILTERTYPE']).style('width: 40%;')
                         DOPPLER_SCANLINES_input = ui.number('SCANLINES', value=current_values['DOPPLER_SCANLINES'], min=1, max=1000).style('width: 40%;')

@@ -32,8 +32,8 @@
 #include <string>
 
 // Default values
-const std::string XPOSMIN_DEF = "0.0";
-const std::string XPOSMAX_DEF = "38.0";
+const std::string XPOSMIN_DEF = "10.0";
+const std::string XPOSMAX_DEF = "51.0";
 const std::string ZPOSMIN_DEF = "0.0";
 const std::string ZPOSMAX_DEF = "4.0";
 const std::string A_MODE_OFFSETMIN_DEF = "5";

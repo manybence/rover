@@ -3,8 +3,9 @@
 
 #include "defaults.h"
 #include "serial_comm.h"
+#include <boost/filesystem.hpp>
 
-std::string FILES_DIRECTORY = "/home/rapid/projects/rover/log/";
+std::string FILES_DIRECTORY = "../log";
 
 using DataBufferType = std::vector<std::tuple<float, int, long long, int, int, std::vector<int16_t>>>;
 
@@ -28,7 +29,7 @@ std::string generate_filename(const std::string& directory) {
         oss.str("");
         oss << directory << "/log" << std::setw(4) << std::setfill('0') << counter << ".txt";
         counter++;
-    } while (std::filesystem::exists(oss.str()));
+    } while (boost::filesystem::exists(oss.str()));
     return oss.str();
 }
 
@@ -88,6 +89,8 @@ void GetParameters(int argc, char* argv[]) {
         angle = stringToInt(parameters["DOPPLER_ANGLE"]);
     };
 
+    A_MODE_PORT = parameters["A_MODE_PORT"];
+    DOPPLER_PORT = parameters["DOPPLER_PORT"];
     xposmin   = stringToFloat(parameters["XPOSMIN"]);
     xposmax   = stringToFloat(parameters["XPOSMAX"]);
     xspeed    = stringToFloat(parameters["XSPEED"]);
@@ -106,9 +109,9 @@ int saveParameters(int argc, char* argv[]){
 
     // Ensure the data directory exists
     std::string directory = FILES_DIRECTORY;
-    if (!std::filesystem::exists(directory)) {
+    if (!boost::filesystem::exists(directory)) {
         std::cout << "Debug: Creating directory " << directory << "\n";
-        std::filesystem::create_directory(directory);
+        boost::filesystem::create_directory(directory);
     };
 
     // Generate a unique filename

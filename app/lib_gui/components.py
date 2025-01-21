@@ -2,6 +2,8 @@ from nicegui import app, ui
 from lib_gui import process_handlers as ph
 import os
 from fastapi.responses import FileResponse
+import socket
+import re
 
 image_element = None  # Placeholder for the image element
 current_image_path = None  # Track the current image to detect changes
@@ -54,8 +56,20 @@ class Status:
             self.label.style("color:black")
         
 def create_header():
+    # Get the system hostname
+    hostname = socket.gethostname()
+    # Try to find numeric part(s) in the hostname
+    match = re.search(r'(\d+)', hostname)
+    
+    # If a numeric portion is found, use it; otherwise default to 'X'
+    if match:
+        unit_number = match.group(1)
+    else:
+        unit_number = 'X'  # Fallback if no digits are found
+
     with ui.header().style('background-color: #C30010; color: white; text-align: center; padding: 1em;'):
-        ui.label('RAPID ULTRASOUND UNIT 3 CONTROL PANEL').style('font-size: 2em; font-weight: bold;')
+        ui.label(f'RAPID ULTRASOUND UNIT {unit_number} CONTROL PANEL') \
+          .style('font-size: 2em; font-weight: bold;')
            
 def available_files():
     with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):

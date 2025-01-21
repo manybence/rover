@@ -1,11 +1,6 @@
 #ifndef relay_h
 #define relay_h
-
-#include <unistd.h>
-#include "gpio_handler.h"
-#include "parameters.h"
-#include "defaults.h"
-#include "diverse.h"
+#include <gpiod.h>
 
 //DELAYRELAY 30000 should be enough, but sometimes not
 #define DELAYRELAY 60000
@@ -19,9 +14,9 @@
 #define SPIRATE 2200000 //approx. MAX Functional value
 
 void ActivateRelayCoil(int c){
-	gpioWrite(c, 1);
+	setGPIOValue(c, 1);
 	usleep(DELAYRELAY);
-	gpioWrite(c, 0);
+	setGPIOValue(c, 0);
 	usleep(DELAYRELAY);
 }
 
@@ -58,78 +53,82 @@ void TestPorts(int p1, int p2){
 	ActivatePort(p2);
 }
 
-void InitHW(bool is_configured) {
-        
+void InitHW() {
+    //int i;
+    printf("Initializing HW\n");
+    printf("Testing relays...\n");
     std::string port;
-    initializeGPIO();
-    gpioWrite(IO_EN3V3, 1); //turn on 3V3 rail
-    gpioWrite(IO_EN5V,  1); //turn on 5V rail
 
-    if (!is_configured) {
+    // Example usage of setting GPIO values
+//    setGPIOValue(IO_EN3V3, 1); // Turns on 3.3V rail
+//    setGPIOValue(IO_EN5V, 1);  // Turns on 5V rail
+//    printf("Wait 3 seconds for rails to stabilize...\n");
+//    usleep(3 * ONESEC);
 
-        printf("Testing relays...\n");
-        
-        //Exercise ports (toggle Relay K300)
-        TestPorts(PORT_X3, PORT_X1);
-        usleep(ONESEC);
-
-        //Exercise ports (toggle Relay K301)
-        TestPorts(PORT_X4, PORT_X3);
-        usleep(ONESEC);
-        
-        // Exercise ports
-        TestPorts(PORT_X1, PORT_X4);
-        usleep(ONESEC);
-    }
+    //for (i = 0; i < 1; i++){
+    //Exercise ports (toggle Relay K300)
     
-    // Activate selected port
-    if (compareStrings(parameters["MODE"], "A-MODE") || 
-        compareStrings(parameters["MODE"], "M-MODE") || 
-        compareStrings(parameters["MODE"], "M-MODE FULL SCAN")) 
-        {port = parameters["A_MODE_PORT"];};
-    if (compareStrings(parameters["MODE"], "DOPPLER")) {port = parameters["DOPPLER_PORT"];};
+    TestPorts(PORT_X3, PORT_X1);
+    usleep(ONESEC);
+
+    //Exercise ports (toggle Relay K301)
+    TestPorts(PORT_X4, PORT_X3);
+    usleep(ONESEC);
+     
+    // Exercise ports
+    TestPorts(PORT_X1, PORT_X4);
+    usleep(ONESEC);
+   // }
+    if (compareStrings(MODE, "A-MODE") || compareStrings(MODE,"M-MODE")) {port = A_MODE_PORT;};
+    if (compareStrings(MODE,"DOPPLER")) {port = DOPPLER_PORT;};
+
     ActivatePort(lookupString(port, translationTable));
 
     usleep(MS1);
-    gpioWrite(IO_FILSEL,filsel); //select filter 1=BPF, 0=HPF
+    setGPIOValue(IO_FILSEL, filsel);
+    
+    //printf("Now release the fpga....\n", done_status);
+    //setGPIOValue(IO_RESET, 0);  
+    //usleep(MS70);
+    //setGPIOValue(IO_RESET, 1);  
+    //usleep(10*MS70); //Long time to measure the done pin
+  
+    // Read a GPIO value
+    int done_status = getGPIOValue(IO_DONE);
+    if (done_status == 1)
+      printf("FPGA has booted: PASS\n");
+    else  
+      printf("FPGA has booted: FAIL\n");
 
-    if (gpioRead(IO_DONE) == 0) {
-        gpioWrite(IO_RESET, 0); // Power on reset
-        usleep(MS1);
-        gpioWrite(IO_RESET, 1);
-        usleep(MS70);
-    };
+    //if (digitalRead(IO_DONE) == HIGH)
+    //    printf("PASS: The FPGA is configured\n");
+    //else
+    //    printf("FAIL: The FPGA could not be configured\n");
+    
+ //   pinMode(IO_RST, OUTPUT);
+ //   digitalWrite(IO_RST, LOW);
 
-    if (gpioRead(IO_DONE) == 1)
-        printf("PASS: The FPGA is configured\n");
-    else
-        printf("FAIL: The FPGA could not be configured\n");
+ //   pinMode(IO_ICE_CS, OUTPUT);
+ //   digitalWrite(IO_ICE_CS, HIGH);
 
-    gpioSetMode(IO_RST, PI_OUTPUT);
-    gpioWrite(IO_RST, 0); // release HW
+ //   pinMode(IO_F_CS, OUTPUT);
+ //   digitalWrite(IO_F_CS, HIGH);
 
-    gpioSetMode(IO_ICE_CS, PI_OUTPUT);
-    gpioWrite(IO_ICE_CS, 1);
-
-    gpioSetMode(IO_F_CS, PI_OUTPUT);
-    gpioWrite(IO_F_CS, 1);
-
-    spiOpen(0, SPIRATE, 0);
+    //wiringPiSPISetup(0, SPIRATE);
+    //spiOpen(0, SPIRATE, 0);
     usleep(MS200);
-
-
-    if (compareStrings(parameters["MODE"], "DOPPLER")) {usleep(3000000);} //3 secs. Wait for power rail stabilization
+    usleep(5000000); //5 secs. Wait for power rail stabilization
 }
 
 void release_HW() {
     
-    spiClose(h);
-    usleep(100);
-    gpioWrite(IO_EN5V, 0);
-    gpioWrite(IO_RST, 0); 
-    gpioWrite(IO_EN3V3, 0);
-    terminateGPIO();
-    usleep(100);
+    //spiClose(h);
+//    usleep(100);
+//    setGPIOValue(IO_EN3V3, 0);
+//    setGPIOValue(IO_RST, 0);
+//    setGPIOValue(IO_EN5V, 0);
+    
+//    usleep(100);
 }
     
 

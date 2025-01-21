@@ -58,6 +58,7 @@ void pack_command(char command, float payload) {
             return;
         }
     }
+    tcdrain(fd);
 }
 
 int set_interface_attribs(int fd, int speed, int parity) {
@@ -117,20 +118,26 @@ void InitMotorCommunication() {
 }
 
 std::string readResponse() {
-    
-    unsigned char rx_buffer[32000];
-    
-    int length = read(fd, rx_buffer, sizeof(rx_buffer));  // Read will timeout after 20 seconds if no data is available
-    if (length < 0) {
-        return "Error reading from serial port";
-    } else if (length == 0) {
-        return "Timeout error";
-    } else {
-        rx_buffer[length] = '\0';  // Null-terminate the string
-        return std::string(reinterpret_cast<char*>(rx_buffer)); // Return the received data
+    char buffer[32000];
+    memset(buffer, 0, sizeof(buffer));
+
+    ssize_t bytes_read = read(fd, buffer, sizeof(buffer) - 1);
+    if (bytes_read < 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // No data available
+            return std::string();
+        } else {
+            // An error occurred
+            std::cerr << "Error reading from device: " << strerror(errno) << std::endl;
+            return std::string();
+        }
+    } else if (bytes_read == 0) {
+        // No data read (device returned EOF or no data)
+        return std::string();
     }
-    
-    return "";
+
+    // Successfully read some data, return it as a string
+    return std::string(buffer, bytes_read);
 }
 
 #endif

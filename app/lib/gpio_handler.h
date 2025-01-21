@@ -1,7 +1,7 @@
 
 // gpio_handler.h
 #pragma once
-#include <pigpio.h>
+#include <gpiod.h>
 
 #define IO_RST 18    // GPIO 18    [J700p12]
 #define IO_DONE 23   // GPIO 23
@@ -23,23 +23,3 @@
 #define IO_P4 26     // GPIO 26    [J700p37]
 #define IO_FILSEL 17 // GPIO 17 [J700p11]
 
-
-void initializeGPIO() {
-	
-	if (gpioInitialise() < 0)
-	return;
-
-    gpioSetMode(IO_DONE, PI_INPUT);
-    gpioSetMode(IO_RESET, PI_OUTPUT);
-    gpioSetMode(IO_RST, PI_OUTPUT);
-    gpioSetMode(IO_HILO, PI_OUTPUT);
-    gpioSetMode(IO_ICE_CS, PI_INPUT);
-    gpioSetMode(IO_F_CS, PI_INPUT);
-    gpioSetMode(IO_F_MOSI, PI_INPUT);
-    gpioSetMode(IO_F_MISO, PI_INPUT);
-    gpioSetMode(IO_F_SCLK, PI_INPUT);
-}
-
-void terminateGPIO() {
-	gpioTerminate();
-}

@@ -23,8 +23,8 @@ def m_mode_imaging(path, template):
 
     # Image processing
     image_proc = proc.preprocess_image(frame_org, template)
-    if (proc.detect_noise(image_proc)):
-        warnings.warn("M-mode image is corrupted. Check for gain and filtering settings!")
+    # if (proc.detect_noise(image_proc)):
+    #     warnings.warn("M-mode image is corrupted. Check for gain and filtering settings!")
 
     # Detect pulsation
     energies = []
