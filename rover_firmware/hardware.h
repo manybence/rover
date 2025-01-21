@@ -216,6 +216,9 @@ void carriage_to_pos(float xpos) {
     if ((MIN_DIST_MM <= xpos) && (xpos <= MAX_DIST_MM)) {
       stepper.moveToAngle(xpos * MM_TO_ANGLE);
       response = "Moving carriage to pos: " + String(xpos, 2) + " mm";
+      m = HAL_GetTick();
+      logIndex = 0;
+      stopWatchStart();
     }
     else response = "Target pos is out of bounds.";
   }

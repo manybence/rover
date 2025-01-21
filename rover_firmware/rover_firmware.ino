@@ -6,6 +6,8 @@
 void setup() {
   stopWatchInit();
   config_hardware();
+  Serial.setTimeout(0.2);
+  Serial.flush();
   Serial.begin(115200);
 }
 
