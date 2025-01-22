@@ -1,4 +1,7 @@
 app/data/
 data/
 log/
-app/log
+app/log/
+.nicegui/
+.vscode/
+app/.nicegui/

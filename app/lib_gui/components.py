@@ -1,5 +1,6 @@
 from nicegui import app, ui
 from lib_gui import process_handlers as ph
+from lib_gui import file_handling as fh
 import os
 from fastapi.responses import FileResponse
 import socket
@@ -11,7 +12,7 @@ current_image_path = None  # Track the current image to detect changes
 class Display:
     def __init__(self):
 
-        image_path = ph.find_latest_bitmap(ph.FILES_DIRECTORY)
+        image_path = fh.find_latest_file(ph.FILES_DIRECTORY, "png")
 
         with ui.card().style('width: 100%; max-width: 600px; margin: auto;'):
             if image_path:
@@ -26,7 +27,7 @@ class Display:
     def update_image(self):
         
         # Find latest image file
-        new_image_path = ph.find_latest_bitmap(ph.FILES_DIRECTORY)
+        new_image_path = fh.find_latest_file(ph.FILES_DIRECTORY, "png")
 
         # Update image variables
         if not (new_image_path == self.path):

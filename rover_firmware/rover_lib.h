@@ -8,6 +8,7 @@
 #define FLASH_SIZE          0x20000     // Size of flash memory to include in CRC (e.g., 128 KB)
 #define CRC32_POLYNOMIAL    0xEDB88320  // CRC-32 polynomial
 const String compilationDate = String(__DATE__) + " " + String(__TIME__);
+const String revNum = "1.0.0";
 
 struct LogEntry {
   int xpos;
@@ -184,7 +185,8 @@ void execute_command(Command command) {
     }
 
     case CMD_READ_VERSION:  {
-      response = String(calculate_flash_crc());  // Return CRC of firmware as version number
+      // response = String(calculate_flash_crc());  // Return CRC of firmware as version number
+      response = revNum;
       break;
     }
 
