@@ -70,7 +70,7 @@ def m_mode_imaging(path, template):
     title = f"M-mode at XPOS: {xpos} mm, pulsation: {pulsation}"
     plt.title(title)
 
-    return energy, freq
+    return energy, freq, xpos
 
 
     

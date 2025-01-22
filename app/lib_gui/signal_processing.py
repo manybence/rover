@@ -109,7 +109,7 @@ def display_b_mode(image, xpos, title):
 
 def display_full_scan(image, positions, title):
     intensity_max = 0.02
-    fig = plt.figure()
+    plt.figure()
     plt.imshow(image, 
                extent=(min(positions), max(positions), image.shape[0] * 1000 * wave_velocity / sampling_freq / 2, 0), 
                aspect='auto', 

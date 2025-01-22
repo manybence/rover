@@ -1,10 +1,8 @@
 from nicegui import app, ui
 import os
-import io
 from lib_gui import process_handlers as ph
+from lib_gui import file_handling as fh
 from lib_gui import components
-import sys
-import time
 
 # Store one-time configuration flag
 configured = False
@@ -28,7 +26,7 @@ def load_parameters():
 
     # Read default values
     try:
-        default_values = ph.read_default_values()
+        default_values = fh.read_default_values()
     except Exception as e:
         print(f"Error loading default values: {e}")
 
@@ -167,8 +165,7 @@ with ui.row().style('width: 100%; display: flex; flex-wrap: wrap;'):
             ui.button('RESET MOTOR', on_click=reset_motor).style('width: 25%;')
             ui.button('RESET DEFAULT PARAMETERS', on_click=reset_default).style('width: 25%;')
             MODE_input = ui.select(
-                ['A-MODE', 'DOPPLER', 'M-MODE', 'NEEDLE'],
-                # ['A-MODE', 'DOPPLER', 'M-MODE', "M-MODE FULL SCAN", 'NEEDLE'], 
+                ['A-MODE', 'DOPPLER', 'M-MODE', "M-MODE FULL SCAN", 'NEEDLE'], 
                 label='MODE OF OPERATION', 
                 value=current_values['MODE'],
                 on_change = lambda e: on_mode_change(e.value)).style('width: 33%;')
@@ -189,7 +186,7 @@ with ui.row().style('width: 100%; display: flex; flex-wrap: wrap;'):
 
             # A-mode settings
             a_mode_exp = ui.expansion('A-MODE', icon='settings').classes('w-full').style('font-weight: bold;')
-            a_mode_exp.visible = (MODE_input in ['A-MODE', 'M-MODE', 'M-MODE FULL SCAN'])
+            # a_mode_exp.visible = (MODE_input in ['A-MODE', 'M-MODE', 'M-MODE FULL SCAN'])
             with a_mode_exp:
                 with ui.row():
                         A_MODE_AUTOGAIN_input = ui.checkbox('AUTO GAIN', value=current_values['A_MODE_AUTOGAIN']).style('width: 40%;')
@@ -205,7 +202,7 @@ with ui.row().style('width: 100%; display: flex; flex-wrap: wrap;'):
             
             # M-mode settings
             m_mode_exp = ui.expansion('M-MODE', icon='settings').classes('w-full').style('font-weight: bold;')
-            m_mode_exp.visible = (MODE_input in ['M-MODE', 'M-MODE FULL SCAN'])
+            # m_mode_exp.visible = (MODE_input in ['M-MODE', 'M-MODE FULL SCAN'])
             with m_mode_exp:
                 with ui.row():
                     M_MODE_SCANTIME_input = ui.number('SCAN TIME (ms)', value=current_values['M_MODE_SCANTIME']).style('width: 100%;')

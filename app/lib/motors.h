@@ -15,7 +15,9 @@
 #include "serial_comm.h"
 #include "base64.h"
 
-static const std::string driver_version = "3185662796";    // CRC of the motor driver. Update when driver firmware is updated.
+// static const std::string driver_version = "3185662796";    // CRC of the motor driver. Update when driver firmware is updated.
+static const std::string driver_version = "1.0.0";    // Rev.num of the motor driver. Update when driver firmware is updated.
+
 
 std::vector<int> timeSeries;
 std::vector<int> positionSeries;
