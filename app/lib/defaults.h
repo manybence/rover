@@ -47,20 +47,20 @@ std::unordered_map<std::string, std::string> loadDefaultParams(const std::string
 }
 
 // Default values
-const std::string XPOSMIN_DEF            =           "5.0";
+const std::string XPOSMIN_DEF            =            "5.0";
 const std::string XPOSMAX_DEF            =           "50.0";
 const std::string XSPEED_DEF             =            "8.0";
 const std::string ZPOSMIN_DEF            =            "0.0";
 const std::string ZPOSMAX_DEF            =            "4.0";
 const std::string A_MODE_OFFSETMIN_DEF   =              "0";
 const std::string A_MODE_OFFSETMAX_DEF   =              "2";
-const std::string A_MODE_AUTOGAIN_DEF    =          " true";
-const std::string A_MODE_MANUALGAIN_DEF  =           " 700";
-const std::string A_MODE_GAINRATE_DEF    =            "105"; //105 For 10 MHz probe  //90 for 5 MHz probe
-const std::string A_MODE_FILTERTYPE_DEF  =            "BPF";
+const std::string A_MODE_AUTOGAIN_DEF    =           "true";
+const std::string A_MODE_MANUALGAIN_DEF  =            "700";
+const std::string A_MODE_GAINRATE_DEF    =             "90"; //105 For 10 MHz probe  //90 for 5 MHz probe
+const std::string A_MODE_FILTERTYPE_DEF  =            "HPF";
 const std::string M_MODE_SCANTIME_DEF    =        "3000000";    // 3000000 us = 3 s
 const std::string DOPPLER_OFFSETMIN_DEF  =              "5";
-const std::string DOPPLER_OFFSETMAX_DEF  =             "5";//50
+const std::string DOPPLER_OFFSETMAX_DEF  =              "5";//50
 const std::string DOPPLER_AUTOGAIN_DEF   =          "false";
 const std::string DOPPLER_MANUALGAIN_DEF =           "1023";
 const std::string DOPPLER_FILTERTYPE_DEF =            "HPF";
@@ -72,8 +72,8 @@ const std::string MODE_DEF               =         "DOPPLER"; //"DOPPLER" | "A-M
 const std::string XSTEP_DEF              =            "1.0";
 const std::string A_MODE_SCANLINES_DEF   =              "1";
 const std::string NEEDLEPOS_DEF          =            "0.0";
-const std::string A_MODE_TXPAT_DEF       = "10 MHz 4 Pulses";
-const std::string DOPPLER_TXPAT_DEF      = "4 MHz 8 Pulses";
+const std::string A_MODE_TXPAT_DEF       =  "5 MHz 1 Pulse";
+const std::string DOPPLER_TXPAT_DEF      = "4 MHz 2 Pulses";
 const std::string COMMENT_DEF	         =    "No comments";
 
 

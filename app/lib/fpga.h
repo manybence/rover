@@ -110,27 +110,33 @@ void fpga(char scantype, int gain, int hilo, int offset) {
     int g, j;
     uint8_t s;
     uint8_t r;
-    j = 0;
-    txBuf[j++] = REG_MODE;          // Set MODE       0x6<<5 [MODE]
-    txBuf[j++] = TXPAT2 | 0x01; //(scantype | 0x01); // even = DOPPL, odd = BSCAN choosing Doppler mode briefly to get DAC value set early
+
+    setGPIOValue(IO_HILO, hilo);
+
 
     g = gain;
     s = g & 0xff;
     r = (g >> 8) & 0x03;
 
+    j = 0;
     txBuf[j++] = REG_DAC_LO;    // Set Gain     0x2<<5 [DAC_LO]
     txBuf[j++] = s;
     txBuf[j++] = REG_DAC_HI;    //              0x3<<5 [DAC_HI]
     txBuf[j++] = r;
-    
-    setGPIOValue(IO_HILO, hilo);
 
     spiXfer(txBuf, rxBuf, j);
-    usleep(200);//10 should be enough - maby the HILO shift need more time
+    usleep(10);//10 should be enough - perhaps the HILO shift need more time
+    
+   
+    j = 0;
+    txBuf[j++] = REG_MODE;        // Set MODE       0x6<<5 [MODE]
+    txBuf[j++] = scantype | 0x01; //(scantype | 0x01); // odd = DOPPL, even = BSCAN choosing Doppler mode briefly to get DAC value set early
+
+    spiXfer(txBuf, rxBuf, j);
 
     j = 0;
     txBuf[j++] = REG_MODE;      // Set MODE       0x6<<5 [MODE]
-    txBuf[j++] = txpat;         //(txpat | DOPPL); // even = DOPPL,  odd = BSCAN (txpat is allready encoded when parameters are read)
+    txBuf[j++] = txpat;         //(txpat | DOPPL); // odd = DOPPL,  even = BSCAN (txpat is allready encoded when parameters are read)
     txBuf[j++] = REG_OFS;       // Offset         0x5<<5 [OFS]
     txBuf[j++] = offset;
 
@@ -146,6 +152,7 @@ void fpga(char scantype, int gain, int hilo, int offset) {
     } else {
         usleep(100);            // if not on doppler mode the 78 us is the time to record the echo from a pulse. Some 1.2 us to send the pulse.
     }
+     
 }
 
 void fpga_scan() {
