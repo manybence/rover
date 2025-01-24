@@ -1,7 +1,9 @@
-app/data/
 data/
+app/data/
 log/
 app/log/
 .nicegui/
-.vscode/
 app/.nicegui/
+.vscode/
+app/.vscode/
+app/lib_gui/__pycache__/
