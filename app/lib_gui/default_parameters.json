@@ -23,6 +23,5 @@
     "MODE":"A-MODE",
     "A_MODE_SCANLINES":100,
     "DOPPLER_SCANLINES":200,
-    "COMMENT":"",
-    "IS_CONFIGURED":false
+    "COMMENT":""
 }

@@ -113,7 +113,7 @@ def reset_default():
 
     # Load default values
     try:
-        current_values = ph.read_default_values()
+        current_values = fh.read_default_values()
     except Exception as e:
         print(f"Error loading default values: {e}")
 
